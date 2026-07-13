@@ -157,7 +157,15 @@ export class LoanService {
     const where: any = {};
     if (status) where.status = status;
     if (customerId) where.customerId = customerId;
-    if (staffId) where.createdById = staffId;
+    if (staffId) {
+      const userAreas = await prisma.userArea.findMany({ where: { userId: staffId }, select: { areaId: true } });
+      const areaIds = userAreas.map(ua => ua.areaId);
+      if (areaIds.length > 0) {
+        where.customer = { areaId: { in: areaIds } };
+      } else {
+        where.id = null; // No areas assigned → no results
+      }
+    }
 
     const { data, total } = await this.loanRepo.findWithPagination({
       where,

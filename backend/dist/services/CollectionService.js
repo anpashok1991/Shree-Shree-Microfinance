@@ -8,6 +8,7 @@ const ReceiptRepository_1 = require("../repositories/ReceiptRepository");
 const AuditRepository_1 = require("../repositories/AuditRepository");
 const errors_1 = require("../utils/errors");
 const helpers_1 = require("../utils/helpers");
+const prisma_1 = require("../config/prisma");
 class CollectionService {
     constructor() {
         this.collectionRepo = new CollectionRepository_1.CollectionRepository();
@@ -17,11 +18,19 @@ class CollectionService {
         this.auditRepo = new AuditRepository_1.AuditRepository();
     }
     async recordCollection(data) {
-        const loan = await this.loanRepo.findById(data.loanId);
+        const loan = await this.loanRepo.findById(data.loanId, { customer: { select: { areaId: true } } });
         if (!loan)
             throw new errors_1.NotFoundError('Loan not found');
         if (loan.status !== 'ACTIVE') {
             throw new errors_1.AppError('Loan is not active', 400);
+        }
+        // STAFF can only collect for loans in their assigned areas
+        if (data.collectedByRole === 'STAFF') {
+            const userAreas = await prisma_1.prisma.userArea.findMany({ where: { userId: data.collectedById }, select: { areaId: true } });
+            const areaIds = userAreas.map(ua => ua.areaId);
+            if (areaIds.length > 0 && !areaIds.includes(loan.customer.areaId)) {
+                throw new errors_1.AppError('You can only collect payments for loans in your assigned area', 403);
+            }
         }
         const newTotalPaid = loan.totalPaid + data.amount;
         const newOutstanding = Math.max(0, loan.outstanding - data.amount);
@@ -77,8 +86,16 @@ class CollectionService {
         const where = {};
         if (loanId)
             where.loanId = loanId;
-        if (staffId)
-            where.collectedById = staffId;
+        if (staffId) {
+            const userAreas = await prisma_1.prisma.userArea.findMany({ where: { userId: staffId }, select: { areaId: true } });
+            const areaIds = userAreas.map(ua => ua.areaId);
+            if (areaIds.length > 0) {
+                where.customer = { areaId: { in: areaIds } };
+            }
+            else {
+                where.id = null;
+            }
+        }
         if (startDate || endDate) {
             where.collectionDate = {};
             if (startDate)

@@ -9,6 +9,7 @@ class CollectionController {
                 const collection = await this.collectionService.recordCollection({
                     ...req.body,
                     collectedById: req.user.userId,
+                    collectedByRole: req.user.role,
                 });
                 res.status(201).json({
                     success: true,

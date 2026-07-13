@@ -5,6 +5,7 @@ import { ReceiptRepository } from '../repositories/ReceiptRepository';
 import { AuditRepository } from '../repositories/AuditRepository';
 import { NotFoundError, AppError } from '../utils/errors';
 import { generateCollectionNo, generateReceiptNo, getPaginationParams } from '../utils/helpers';
+import { prisma } from '../config/prisma';
 
 
 export class CollectionService {
@@ -27,13 +28,23 @@ export class CollectionService {
     customerId: string;
     amount: number;
     collectedById: string;
+    collectedByRole?: string;
     remarks?: string;
     collectionDate?: string;
   }) {
-    const loan = await this.loanRepo.findById(data.loanId);
+    const loan: any = await this.loanRepo.findById(data.loanId, { customer: { select: { areaId: true } } });
     if (!loan) throw new NotFoundError('Loan not found');
     if (loan.status !== 'ACTIVE') {
       throw new AppError('Loan is not active', 400);
+    }
+
+    // STAFF can only collect for loans in their assigned areas
+    if (data.collectedByRole === 'STAFF') {
+      const userAreas = await prisma.userArea.findMany({ where: { userId: data.collectedById }, select: { areaId: true } });
+      const areaIds = userAreas.map(ua => ua.areaId);
+      if (areaIds.length > 0 && !areaIds.includes(loan.customer.areaId)) {
+        throw new AppError('You can only collect payments for loans in your assigned area', 403);
+      }
     }
 
     const newTotalPaid = loan.totalPaid + data.amount;
@@ -104,7 +115,15 @@ export class CollectionService {
 
     const where: any = {};
     if (loanId) where.loanId = loanId;
-    if (staffId) where.collectedById = staffId;
+    if (staffId) {
+      const userAreas = await prisma.userArea.findMany({ where: { userId: staffId }, select: { areaId: true } });
+      const areaIds = userAreas.map(ua => ua.areaId);
+      if (areaIds.length > 0) {
+        where.customer = { areaId: { in: areaIds } };
+      } else {
+        where.id = null;
+      }
+    }
     if (startDate || endDate) {
       where.collectionDate = {};
       if (startDate) where.collectionDate.gte = startDate;

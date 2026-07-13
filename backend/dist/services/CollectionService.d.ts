@@ -10,6 +10,7 @@ export declare class CollectionService {
         customerId: string;
         amount: number;
         collectedById: string;
+        collectedByRole?: string;
         remarks?: string;
         collectionDate?: string;
     }): Promise<{
