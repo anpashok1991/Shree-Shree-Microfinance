@@ -21,6 +21,7 @@ import BorrowerLayout from './pages/borrower/BorrowerLayout';
 import BorrowerDashboard from './pages/borrower/BorrowerDashboard';
 import ApplyLoanPage from './pages/borrower/ApplyLoanPage';
 import MyLoansPage from './pages/borrower/MyLoansPage';
+import BorrowerLoanDetailPage from './pages/borrower/LoanDetailPage';
 import EditProfilePage from './pages/borrower/EditProfilePage';
 import EnquiryListPage from './pages/enquiries/EnquiryListPage';
 import ProfilePage from './pages/profile/ProfilePage';
@@ -38,6 +39,7 @@ export default function App() {
               <Route index element={<BorrowerDashboard />} />
               <Route path="apply" element={<ApplyLoanPage />} />
               <Route path="loans" element={<MyLoansPage />} />
+              <Route path="loans/:id" element={<BorrowerLoanDetailPage />} />
               <Route path="profile" element={<EditProfilePage />} />
             </Route>
             <Route element={<AppLayout />}>

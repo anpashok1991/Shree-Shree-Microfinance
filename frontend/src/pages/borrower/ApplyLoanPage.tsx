@@ -5,8 +5,14 @@ import { Calculator } from 'lucide-react';
 
 export default function ApplyLoanPage() {
   const navigate = useNavigate();
+  const requiredFields = ['name', 'fatherName', 'mobile', 'aadhaarNumber', 'address', 'village', 'district', 'state', 'pinCode', 'occupation'];
+  const fieldLabels: Record<string, string> = {
+    name: 'Full Name', fatherName: "Father's Name", mobile: 'Mobile',
+    aadhaarNumber: 'Aadhaar Number', address: 'Address', village: 'Village',
+    district: 'District', state: 'State', pinCode: 'PIN Code', occupation: 'Occupation',
+  };
   const [checking, setChecking] = useState(true);
-  const [noProfile, setNoProfile] = useState(false);
+  const [missingFields, setMissingFields] = useState<string[]>([]);
   const [amount, setAmount] = useState('');
   const [calculation, setCalculation] = useState<any>(null);
   const [loading, setLoading] = useState(false);
@@ -16,18 +22,27 @@ export default function ApplyLoanPage() {
 
   useEffect(() => {
     borrowerApi.getProfile()
-      .then((r) => { if (!r) setNoProfile(true); })
-      .catch(() => setNoProfile(true))
+      .then((r) => {
+        if (!r) { setMissingFields(requiredFields); return; }
+        const missing = requiredFields.filter((f) => !r[f]);
+        if (missing.length > 0) { setMissingFields(missing); return; }
+      })
+      .catch(() => setMissingFields(requiredFields))
       .finally(() => setChecking(false));
   }, []);
 
   if (checking) return <p className="text-secondary">Checking profile...</p>;
-  if (noProfile) return (
-    <div className="card" style={{ maxWidth: '500px', textAlign: 'center', padding: '40px' }}>
-      <h2 style={{ marginBottom: '12px' }}>Profile Required</h2>
-      <p style={{ color: 'var(--text-secondary)', marginBottom: '20px' }}>
-        Please complete your profile before applying for a loan.
+  if (missingFields.length > 0) return (
+    <div className="card" style={{ maxWidth: '500px', padding: '30px' }}>
+      <h2 style={{ marginBottom: '12px' }}>Complete Your Profile</h2>
+      <p style={{ color: 'var(--text-secondary)', marginBottom: '16px' }}>
+        The following fields are required before you can apply for a loan:
       </p>
+      <ul style={{ marginBottom: '20px', paddingLeft: '20px', lineHeight: 1.8 }}>
+        {missingFields.map((f) => (
+          <li key={f} style={{ color: 'var(--danger)' }}>{fieldLabels[f] || f}</li>
+        ))}
+      </ul>
       <Link to="/borrower/profile" className="btn btn-primary">
         Go to My Profile
       </Link>
@@ -50,22 +65,23 @@ export default function ApplyLoanPage() {
     setSuccess('');
     const amt = parseFloat(amount);
     if (!amt || amt <= 0) { setErr('Enter a valid loan amount'); return; }
+    if (!files.aadhaar) { setErr('Please upload your Aadhaar card'); return; }
+    if (!files.pan) { setErr('Please upload your PAN card'); return; }
+    if (!files.photo) { setErr('Please upload your photo'); return; }
     setLoading(true);
     try {
       const res = await borrowerApi.applyLoan({ amount: amt });
       const loan = res.data;
       setSuccess(`Application submitted! Ref: ${loan?.loanNumber || ''}`);
 
-      if (files.aadhaar || files.pan || files.photo) {
-        const formData = new FormData();
-        if (files.aadhaar) formData.append('aadhaar', files.aadhaar);
-        if (files.pan) formData.append('pan', files.pan);
-        if (files.photo) formData.append('photo', files.photo);
-        try {
-          await uploadApi.customerDocs(loan.customerId, formData);
-          setSuccess(prev => prev + ' Documents uploaded.');
-        } catch { }
-      }
+      const formData = new FormData();
+      formData.append('aadhaar', files.aadhaar);
+      formData.append('pan', files.pan);
+      formData.append('photo', files.photo);
+      try {
+        await uploadApi.customerDocs(loan.customerId, formData);
+        setSuccess(prev => prev + ' Documents uploaded.');
+      } catch { }
 
       setTimeout(() => navigate('/borrower/loans'), 2000);
     } catch (err: any) {
@@ -112,19 +128,25 @@ export default function ApplyLoanPage() {
         </div>
 
         <div className="card mb-4">
-          <div className="card-header"><h3 className="card-title">Upload Documents (Optional)</h3></div>
+          <div className="card-header"><h3 className="card-title">Required Documents</h3></div>
           <div className="card-body">
             <div className="form-group">
-              <label className="form-label">Aadhaar Card</label>
-              <input className="form-input" type="file" accept="image/*,.pdf" onChange={e => setFiles({ ...files, aadhaar: e.target.files?.[0] })} />
+              <label className="form-label">Aadhaar Card *</label>
+              <input className="form-input" type="file" accept="image/*,.pdf" required
+                onChange={e => setFiles({ ...files, aadhaar: e.target.files?.[0] })} />
+              {files.aadhaar && <small style={{ color: 'var(--success)' }}>Selected: {files.aadhaar.name}</small>}
             </div>
             <div className="form-group">
-              <label className="form-label">PAN Card</label>
-              <input className="form-input" type="file" accept="image/*,.pdf" onChange={e => setFiles({ ...files, pan: e.target.files?.[0] })} />
+              <label className="form-label">PAN Card *</label>
+              <input className="form-input" type="file" accept="image/*,.pdf" required
+                onChange={e => setFiles({ ...files, pan: e.target.files?.[0] })} />
+              {files.pan && <small style={{ color: 'var(--success)' }}>Selected: {files.pan.name}</small>}
             </div>
             <div className="form-group">
-              <label className="form-label">Photo</label>
-              <input className="form-input" type="file" accept="image/*" onChange={e => setFiles({ ...files, photo: e.target.files?.[0] })} />
+              <label className="form-label">Photo *</label>
+              <input className="form-input" type="file" accept="image/*" required
+                onChange={e => setFiles({ ...files, photo: e.target.files?.[0] })} />
+              {files.photo && <small style={{ color: 'var(--success)' }}>Selected: {files.photo.name}</small>}
             </div>
           </div>
         </div>

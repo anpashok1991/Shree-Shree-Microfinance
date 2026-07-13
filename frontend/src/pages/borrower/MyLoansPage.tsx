@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { borrowerApi } from '../../services/api';
-import { Wallet } from 'lucide-react';
+import { Wallet, Eye } from 'lucide-react';
 
 export default function MyLoansPage() {
   const [loans, setLoans] = useState<any[]>([]);
@@ -56,6 +57,11 @@ export default function MyLoansPage() {
               <div><span className="text-secondary">Outstanding:</span> ₹{loan.outstanding?.toLocaleString()}</div>
               <div><span className="text-secondary">Paid:</span> ₹{loan.totalPaid?.toLocaleString()}</div>
               <div><span className="text-secondary">Tenure:</span> {loan.tenure} days</div>
+            </div>
+            <div style={{ marginTop: '12px' }}>
+              <Link to={`/borrower/loans/${loan.id}`} className="btn btn-sm btn-secondary" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                <Eye size={14} /> View Details
+              </Link>
             </div>
           </div>
         </div>

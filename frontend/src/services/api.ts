@@ -156,6 +156,7 @@ export const borrowerApi = {
   applyLoan: (data: any) => api.post('/loans/borrower-apply', data).then((r) => r.data),
   getProfile: () => api.get('/borrower/profile').then((r) => r.data),
   updateProfile: (data: any) => api.put('/borrower/profile', data).then((r) => r.data),
+  getLoanDetail: (id: string) => api.get(`/borrower/loans/${id}`).then((r) => r.data),
 };
 
 export const searchApi = {

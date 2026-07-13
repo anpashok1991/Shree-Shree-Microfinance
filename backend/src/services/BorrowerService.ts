@@ -1,16 +1,19 @@
 import { prisma } from '../config/prisma';
 import { CustomerRepository } from '../repositories/CustomerRepository';
 import { AreaRepository } from '../repositories/AreaRepository';
+import { LoanRepository } from '../repositories/LoanRepository';
 import { NotFoundError, AppError, ConflictError } from '../utils/errors';
 import { generateCustomerId } from '../utils/helpers';
 
 export class BorrowerService {
   private customerRepo: CustomerRepository;
   private areaRepo: AreaRepository;
+  private loanRepo: LoanRepository;
 
   constructor() {
     this.customerRepo = new CustomerRepository();
     this.areaRepo = new AreaRepository();
+    this.loanRepo = new LoanRepository();
   }
 
   async getProfile(userId: string) {
@@ -90,5 +93,15 @@ export class BorrowerService {
     });
 
     return this.customerRepo.findById(customer.id, { area: true });
+  }
+
+  async getLoanDetail(userId: string, loanId: string) {
+    const customer = await this.customerRepo.findByUserId(userId);
+    if (!customer) throw new NotFoundError('Customer profile not found');
+
+    const loan = await this.loanRepo.getLoanHistory(loanId);
+    if (!loan || loan.customerId !== customer.id) throw new NotFoundError('Loan not found');
+
+    return loan;
   }
 }

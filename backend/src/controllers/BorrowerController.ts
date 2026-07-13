@@ -26,4 +26,13 @@ export class BorrowerController {
       next(error);
     }
   };
+
+  getLoanDetail = async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+      const loan = await this.borrowerService.getLoanDetail(req.user!.userId, req.params.id as string);
+      res.json({ success: true, data: loan });
+    } catch (error) {
+      next(error);
+    }
+  };
 }

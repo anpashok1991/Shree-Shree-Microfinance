@@ -10,5 +10,6 @@ router.use(authorize('BORROWER'));
 
 router.get('/profile', controller.getProfile);
 router.put('/profile', controller.saveProfile);
+router.get('/loans/:id', controller.getLoanDetail);
 
 export default router;
