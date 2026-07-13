@@ -2,12 +2,13 @@ import { useState, useEffect } from 'react';
 import { userApi } from '../../services/api';
 import DataTable from '../../components/common/DataTable';
 import Modal from '../../components/common/Modal';
-import { Plus, Lock, Unlock, RotateCcw } from 'lucide-react';
+import { Plus, Lock, Unlock, RotateCcw, Edit, Trash2 } from 'lucide-react';
 
 export default function UserListPage() {
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [editingUser, setEditingUser] = useState<any>(null);
   const [resetPw, setResetPw] = useState<{ id: string; name: string } | null>(null);
   const [newPassword, setNewPassword] = useState('');
   const [form, setForm] = useState({ name: '', email: '', phone: '', password: '', role: 'STAFF' });
@@ -22,12 +23,38 @@ export default function UserListPage() {
 
   useEffect(() => { fetch(); }, []);
 
-  const handleCreate = async (e: any) => {
+  const openCreate = () => {
+    setEditingUser(null);
+    setForm({ name: '', email: '', phone: '', password: '', role: 'STAFF' });
+    setShowModal(true);
+  };
+
+  const openEdit = (user: any) => {
+    setEditingUser(user);
+    setForm({ name: user.name, email: user.email, phone: user.phone, password: '', role: user.role });
+    setShowModal(true);
+  };
+
+  const handleSubmit = async (e: any) => {
     e.preventDefault();
     try {
-      await userApi.create(form);
+      if (editingUser) {
+        const data: any = { name: form.name, phone: form.phone, role: form.role };
+        await userApi.update(editingUser.id, data);
+      } else {
+        await userApi.create(form);
+      }
       setShowModal(false);
+      setEditingUser(null);
       setForm({ name: '', email: '', phone: '', password: '', role: 'STAFF' });
+      fetch();
+    } catch (err: any) { alert(err.response?.data?.message || 'Failed'); }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this user?')) return;
+    try {
+      await userApi.delete(id);
       fetch();
     } catch (err: any) { alert(err.response?.data?.message || 'Failed'); }
   };
@@ -54,6 +81,7 @@ export default function UserListPage() {
     {
       key: 'actions', label: 'Actions', render: (r: any) => (
         <div className="table-actions">
+          <button className="btn btn-sm btn-secondary" onClick={(e) => { e.stopPropagation(); openEdit(r); }}><Edit size={14} /></button>
           <button className="btn btn-sm btn-secondary" onClick={(e) => { e.stopPropagation(); userApi.toggleStatus(r.id, r.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE').then(fetch); }}>
             {r.status === 'ACTIVE' ? 'Deactivate' : 'Activate'}
           </button>
@@ -63,6 +91,7 @@ export default function UserListPage() {
           <button className="btn btn-sm btn-secondary" onClick={(e) => { e.stopPropagation(); setResetPw({ id: r.id, name: r.name }); }}>
             <RotateCcw size={14} />
           </button>
+          <button className="btn btn-sm btn-danger" onClick={(e) => { e.stopPropagation(); handleDelete(r.id); }}><Trash2 size={14} /></button>
         </div>
       ),
     },
@@ -72,7 +101,7 @@ export default function UserListPage() {
     <div>
       <div className="flex items-center justify-between mb-4">
         <h1 className="header-title">Users</h1>
-        <button className="btn btn-primary" onClick={() => setShowModal(true)}>
+        <button className="btn btn-primary" onClick={openCreate}>
           <Plus size={18} /> Add User
         </button>
       </div>
@@ -81,8 +110,8 @@ export default function UserListPage() {
         <DataTable columns={columns} data={users} loading={loading} />
       </div>
 
-      <Modal open={showModal} onClose={() => setShowModal(false)} title="Create User">
-        <form onSubmit={handleCreate}>
+      <Modal open={showModal} onClose={() => { setShowModal(false); setEditingUser(null); }} title={editingUser ? 'Edit User' : 'Create User'}>
+        <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label className="form-label">Name *</label>
             <input className="form-input" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
@@ -95,10 +124,12 @@ export default function UserListPage() {
             <label className="form-label">Phone *</label>
             <input className="form-input" required value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
           </div>
-          <div className="form-group">
-            <label className="form-label">Password *</label>
-            <input className="form-input" type="password" required value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
-          </div>
+          {!editingUser && (
+            <div className="form-group">
+              <label className="form-label">Password *</label>
+              <input className="form-input" type="password" required value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
+            </div>
+          )}
           <div className="form-group">
             <label className="form-label">Role *</label>
             <select className="form-select" value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })}>
@@ -108,7 +139,7 @@ export default function UserListPage() {
               <option value="VIEWER">Viewer</option>
             </select>
           </div>
-          <button className="btn btn-primary btn-block" type="submit">Create User</button>
+          <button className="btn btn-primary btn-block" type="submit">{editingUser ? 'Update User' : 'Create User'}</button>
         </form>
       </Modal>
 

@@ -11,6 +11,29 @@ const reportTypes = [
   { key: 'renewals', label: 'Renewals' },
 ];
 
+const reportFields: Record<string, Record<string, string>> = {
+  daily: { customer: 'Customer', loan: 'Loan #', amount: 'Amount', collectionDate: 'Date', collectedBy: 'Collected By', remarks: 'Remarks' },
+  monthly: { customer: 'Customer', loan: 'Loan #', amount: 'Amount', collectionDate: 'Date', collectedBy: 'Collected By', remarks: 'Remarks' },
+  outstanding: { customer: 'Customer', loan: 'Loan #', amount: 'Amount', outstanding: 'Outstanding', dailyCollection: 'Daily', startDate: 'Start Date' },
+  defaulters: { customer: 'Customer', loan: 'Loan #', amount: 'Amount', outstanding: 'Outstanding', dailyCollection: 'Daily', startDate: 'Start Date' },
+  renewals: { customer: 'Customer', loan: 'Loan #', amount: 'Amount', renewalCharge: 'Renewal Charge', createdAt: 'Date' },
+  profit: { label: 'Metric', value: 'Value' },
+};
+
+function getFieldValue(row: any, key: string): string {
+  if (key === 'customer') return row.customer?.name || row.customer?.mobile || '-';
+  if (key === 'loan') return row.loan?.loanNumber || row.loanNumber || '-';
+  if (key === 'collectedBy') return row.collectedBy?.name || '-';
+  if (key === 'amount') return `₹${(row.amount || 0).toLocaleString()}`;
+  if (key === 'outstanding') return `₹${(row.outstanding || 0).toLocaleString()}`;
+  if (key === 'dailyCollection') return `₹${row.dailyCollection}`;
+  if (key === 'collectionDate') return new Date(row.collectionDate).toLocaleDateString();
+  if (key === 'startDate') return row.startDate ? new Date(row.startDate).toLocaleDateString() : '-';
+  if (key === 'createdAt') return new Date(row.createdAt).toLocaleDateString();
+  if (key === 'renewalCharge') return `₹${(row.renewalCharge || 0).toLocaleString()}`;
+  return String(row[key] ?? '');
+}
+
 export default function ReportPage() {
   const [type, setType] = useState('daily');
   const [data, setData] = useState<any[]>([]);
@@ -48,6 +71,9 @@ export default function ReportPage() {
     finally { setLoading(false); }
   };
 
+  const fields = reportFields[type] || {};
+  const fieldKeys = Object.keys(fields);
+
   return (
     <div>
       <h1 className="header-title mb-4">Reports</h1>
@@ -84,16 +110,16 @@ export default function ReportPage() {
             <table className="table">
               <thead>
                 <tr>
-                  {Object.keys(data[0] || {}).filter(k => k !== 'id').map((k) => (
-                    <th key={k}>{k.replace(/([A-Z])/g, ' $1').replace(/^./, (s) => s.toUpperCase())}</th>
+                  {fieldKeys.map((k) => (
+                    <th key={k}>{fields[k]}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {data.map((row, i) => (
                   <tr key={i}>
-                    {Object.entries(row).filter(([k]) => k !== 'id').map(([k, v]) => (
-                      <td key={k}>{typeof v === 'object' ? JSON.stringify(v) : String(v)}</td>
+                    {fieldKeys.map((k) => (
+                      <td key={k}>{getFieldValue(row, k)}</td>
                     ))}
                   </tr>
                 ))}

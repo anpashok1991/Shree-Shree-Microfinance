@@ -14,6 +14,7 @@ import publicRoutes from './public';
 import uploadRoutes from './upload';
 import enquiryRoutes from './enquiries';
 import borrowerRoutes from './borrower';
+import receiptRoutes from './receipts';
 
 const router = Router();
 
@@ -32,5 +33,6 @@ router.use('/expenses', expenseRoutes);
 router.use('/uploads', uploadRoutes);
 router.use('/enquiries', enquiryRoutes);
 router.use('/borrower', borrowerRoutes);
+router.use('/receipts', receiptRoutes);
 
 export default router;

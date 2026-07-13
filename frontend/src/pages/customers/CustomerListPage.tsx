@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { customerApi } from '../../services/api';
 import DataTable from '../../components/common/DataTable';
-import { Plus, Search } from 'lucide-react';
+import { Plus, Search, Edit, Trash2 } from 'lucide-react';
 
 export default function CustomerListPage() {
   const [customers, setCustomers] = useState<any[]>([]);
@@ -32,6 +32,14 @@ export default function CustomerListPage() {
 
   const handleSearch = () => { if (search) fetch(search); };
 
+  const handleDelete = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this customer?')) return;
+    try {
+      await customerApi.delete(id);
+      fetch();
+    } catch (err: any) { alert(err.response?.data?.message || 'Failed'); }
+  };
+
   const columns = [
     { key: 'customerId', label: 'ID', render: (r: any) => <span className="font-medium">{r.customerId}</span> },
     { key: 'name', label: 'Name' },
@@ -42,6 +50,14 @@ export default function CustomerListPage() {
       const badges: any = { ACTIVE: 'badge-success', PENDING: 'badge-warning', CLOSED: 'badge-secondary', BLACKLISTED: 'badge-danger' };
       return <span className={`badge ${badges[r.status] || 'badge-secondary'}`}>{r.status}</span>;
     }},
+    {
+      key: 'actions', label: 'Actions', render: (r: any) => (
+        <div className="table-actions">
+          <button className="btn btn-sm btn-secondary" onClick={(e) => { e.stopPropagation(); navigate(`/customers/edit/${r.id}`); }}><Edit size={14} /></button>
+          <button className="btn btn-sm btn-danger" onClick={(e) => { e.stopPropagation(); handleDelete(r.id); }}><Trash2 size={14} /></button>
+        </div>
+      ),
+    },
   ];
 
   return (

@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { NavLink, Link } from 'react-router-dom';
 import {
   LayoutDashboard, Users, Wallet, Banknote,
@@ -6,6 +7,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
+import { publicApi, resolveUrl } from '../../services/api';
 
 const navItems = [
   { section: 'Main', items: [
@@ -31,6 +33,12 @@ const navItems = [
 export default function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { user, logout } = useAuth();
   const { dark, toggle } = useTheme();
+  const [logo, setLogo] = useState('');
+
+  useEffect(() => {
+    publicApi.getCompanyInfo().then(r => setLogo(r.data?.logo || '')).catch(() => {});
+  }, []);
+
   return (
     <>
       {open && <div className="sidebar-overlay" onClick={onClose} style={{
@@ -38,7 +46,7 @@ export default function Sidebar({ open, onClose }: { open: boolean; onClose: () 
       }} />}
       <aside className={`sidebar ${open ? 'open' : ''}`}>
         <div className="sidebar-header">
-          <div className="sidebar-logo">SS</div>
+          {logo ? <img src={resolveUrl(logo)} alt="" style={{ height: '32px', width: '32px', borderRadius: '6px', objectFit: 'cover' }} /> : <div className="sidebar-logo">SS</div>}
           <div className="sidebar-brand">
             Shree Shree Group
             <small>Microfinance System</small>

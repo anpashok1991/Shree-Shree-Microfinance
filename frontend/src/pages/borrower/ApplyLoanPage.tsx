@@ -1,11 +1,21 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { borrowerApi, uploadApi } from '../../services/api';
 import { Calculator } from 'lucide-react';
 
 export default function ApplyLoanPage() {
   const navigate = useNavigate();
+  const [checking, setChecking] = useState(true);
   const [amount, setAmount] = useState('');
+
+  useEffect(() => {
+    borrowerApi.getProfile()
+      .then((r) => { if (!r.data) navigate('/borrower/profile'); })
+      .catch(() => navigate('/borrower/profile'))
+      .finally(() => setChecking(false));
+  }, []);
+
+  if (checking) return <p className="text-secondary">Checking profile...</p>;
   const [calculation, setCalculation] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState('');

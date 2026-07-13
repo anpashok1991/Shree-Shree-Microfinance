@@ -91,6 +91,12 @@ export const collectionApi = {
   getAll: (params?: any) => api.get('/collections', { params }).then((r) => r.data),
   create: (data: any) => api.post('/collections', data).then((r) => r.data),
   getTodayStats: () => api.get('/collections/today/stats').then((r) => r.data),
+  void: (id: string) => api.delete(`/collections/${id}`).then((r) => r.data),
+};
+
+export const receiptApi = {
+  getByCollection: (collectionId: string) => api.get(`/receipts/collection/${collectionId}`).then((r) => r.data),
+  getByLoan: (loanId: string) => api.get(`/receipts/loan/${loanId}`).then((r) => r.data),
 };
 
 export const dashboardApi = {
@@ -166,6 +172,15 @@ export function resolveUrl(path: string): string {
   if (path.startsWith('http://') || path.startsWith('https://')) return path;
   const base = API_BASE.replace('/api', '');
   return `${base}${path}`;
+}
+
+export function whatsappLink(phone: string, text: string): string {
+  const cleaned = phone.replace(/[^0-9]/g, '');
+  return `https://wa.me/91${cleaned}?text=${encodeURIComponent(text)}`;
+}
+
+export function getWhatsappNumber(): string {
+  return '918765432100';
 }
 
 export default api;

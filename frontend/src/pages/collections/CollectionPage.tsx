@@ -1,7 +1,7 @@
 import type { FormEvent } from 'react';
 import { useState, useEffect } from 'react';
-import { collectionApi, loanApi, customerApi } from '../../services/api';
-import { Search, IndianRupee } from 'lucide-react';
+import { collectionApi, loanApi, customerApi, receiptApi, whatsappLink } from '../../services/api';
+import { Search, IndianRupee, Printer, XCircle, MessageCircle } from 'lucide-react';
 import DataTable from '../../components/common/DataTable';
 
 export default function CollectionPage() {
@@ -10,6 +10,7 @@ export default function CollectionPage() {
   const [loan, setLoan] = useState<any>(null);
   const [amount, setAmount] = useState(0);
   const [remarks, setRemarks] = useState('');
+  const [collectionDate, setCollectionDate] = useState(new Date().toISOString().split('T')[0]);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
   const [search, setSearch] = useState('');
@@ -53,6 +54,7 @@ export default function CollectionPage() {
         customerId: selectedCustomer.id,
         amount,
         remarks,
+        collectionDate,
       });
       setMessage(`Collection recorded! Receipt: ${res.data?.receipt?.receiptNo || ''}`);
       setAmount(0);
@@ -65,12 +67,87 @@ export default function CollectionPage() {
     } finally { setSaving(false); }
   };
 
+  const handleVoid = async (id: string) => {
+    if (!confirm('Are you sure you want to void this collection? This will reverse the payment.')) return;
+    try {
+      await collectionApi.void(id);
+      collectionApi.getAll({ limit: 10 }).then((r) => setRecent(r.data));
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Failed to void');
+    }
+  };
+
+  const handlePrintReceipt = async (collection: any) => {
+    try {
+      const res = await receiptApi.getByCollection(collection.id);
+      const r = res.data;
+      if (!r) { alert('Receipt not found'); return; }
+
+      const win = window.open('', '_blank');
+      if (!win) { alert('Please allow popups'); return; }
+
+      win.document.write(`
+        <html><head><title>Receipt ${r.receiptNo}</title>
+        <style>
+          body { font-family: 'Courier New', monospace; max-width: 300px; margin: 20px auto; padding: 10px; }
+          h2 { text-align: center; margin: 0 0 4px; font-size: 16px; }
+          .center { text-align: center; font-size: 12px; margin: 2px 0; }
+          hr { border: dashed 1px #999; }
+          table { width: 100%; font-size: 12px; }
+          td { padding: 2px 4px; }
+          .right { text-align: right; }
+          .bold { font-weight: bold; }
+          .footer { text-align: center; font-size: 11px; margin-top: 8px; color: #666; }
+          @media print { .no-print { display: none; } }
+        </style></head><body>
+        <h2>Shree Shree Group</h2>
+        <p class="center">Microfinance System</p>
+        <p class="center"><strong>RECEIPT</strong></p>
+        <hr/>
+        <table>
+          <tr><td>Receipt #</td><td class="right bold">${r.receiptNo}</td></tr>
+          <tr><td>Date</td><td class="right">${new Date(collection.collectionDate).toLocaleDateString()}</td></tr>
+          <tr><td>Customer</td><td class="right">${r.customerName}</td></tr>
+          <tr><td>Loan #</td><td class="right">${collection.loan?.loanNumber || '-'}</td></tr>
+          <tr><td>Amount</td><td class="right bold">₹${r.amount.toLocaleString()}</td></tr>
+          <tr><td>Balance Before</td><td class="right">₹${r.balanceBefore.toLocaleString()}</td></tr>
+          <tr><td>Balance After</td><td class="right">₹${r.balanceAfter.toLocaleString()}</td></tr>
+          ${collection.remarks ? `<tr><td>Remarks</td><td class="right">${collection.remarks}</td></tr>` : ''}
+        </table>
+        <hr/>
+        <p class="center">Thank you for your payment!</p>
+        <p class="footer">Generated on ${new Date().toLocaleString()}</p>
+        <div class="no-print" style="text-align:center;margin-top:16px">
+          <button onclick="window.print()" style="padding:8px 24px;cursor:pointer">Print</button>
+        </div>
+        <script>window.onload = function() { setTimeout(function() { window.print(); }, 500); }</script>
+      </body></html>`);
+      win.document.close();
+    } catch { alert('Failed to load receipt'); }
+  };
+
   const columns = [
-    { key: 'collectionNo', label: 'Receipt', render: (r: any) => <span className="font-medium">{r.receipt?.receiptNo || r.collectionNo}</span> },
+    { key: 'receipt', label: 'Receipt', render: (r: any) => <span className="font-medium">{r.receipt?.receiptNo || r.collectionNo}</span> },
     { key: 'customer', label: 'Customer', render: (r: any) => r.customer?.name },
     { key: 'amount', label: 'Amount', render: (r: any) => `₹${r.amount.toLocaleString()}` },
     { key: 'collectedBy', label: 'By', render: (r: any) => r.collectedBy?.name },
     { key: 'collectionDate', label: 'Date', render: (r: any) => new Date(r.collectionDate).toLocaleString() },
+    { key: 'remarks', label: 'Remarks', render: (r: any) => r.remarks || '-' },
+    {
+      key: 'actions', label: 'Actions', render: (r: any) => (
+        <div className="table-actions">
+          <button className="btn btn-sm btn-secondary" onClick={(e) => { e.stopPropagation(); handlePrintReceipt(r); }} title="Print Receipt">
+            <Printer size={14} />
+          </button>
+          <button className="btn btn-sm btn-success" onClick={(e) => { e.stopPropagation(); window.open(whatsappLink(r.customer?.mobile || '', `Dear ${r.customer?.name}, your payment of ₹${r.amount} has been received. Receipt: ${r.receipt?.receiptNo || r.collectionNo}`), '_blank'); }} title="Send via WhatsApp">
+            <MessageCircle size={14} />
+          </button>
+          <button className="btn btn-sm btn-danger" onClick={(e) => { e.stopPropagation(); handleVoid(r.id); }} title="Void Collection">
+            <XCircle size={14} />
+          </button>
+        </div>
+      ),
+    },
   ];
 
   return (
@@ -123,6 +200,10 @@ export default function CollectionPage() {
                     <Row label="Loan #" value={loan.loanNumber} />
                     <Row label="Daily Due" value={`₹${loan.dailyCollection}`} />
                     <Row label="Outstanding" value={`₹${loan.outstanding.toLocaleString()}`} />
+                    <div className="form-group">
+                      <label className="form-label">Collection Date</label>
+                      <input className="form-input" type="date" value={collectionDate} onChange={(e) => setCollectionDate(e.target.value)} />
+                    </div>
                     <div className="form-group">
                       <label className="form-label">Amount *</label>
                       <input className="form-input" type="number" step="0.01" required value={amount} onChange={(e) => setAmount(parseFloat(e.target.value) || 0)} />

@@ -42,6 +42,13 @@ export class CollectionController {
     }
   };
 
+  voidCollection = async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+      await this.collectionService.voidCollection(req.params.id as string, req.user!.userId);
+      res.json({ success: true, message: 'Collection voided successfully' });
+    } catch (error) { next(error); }
+  };
+
   getTodayStats = async (_req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const stats = await this.collectionService.getTodayStats();

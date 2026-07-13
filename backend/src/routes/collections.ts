@@ -12,5 +12,6 @@ router.use(authenticate);
 router.get('/', authorize('SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STAFF'), controller.getCollections);
 router.get('/today/stats', authorize('SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STAFF'), controller.getTodayStats);
 router.post('/', authorize('SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STAFF'), validate(createCollectionSchema), controller.recordCollection);
+router.delete('/:id', authorize('SUPER_ADMIN', 'ADMIN'), controller.voidCollection);
 
 export default router;

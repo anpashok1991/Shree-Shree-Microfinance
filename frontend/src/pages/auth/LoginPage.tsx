@@ -2,8 +2,8 @@ import type { FormEvent } from 'react';
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, Navigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { publicApi, resolveUrl } from '../../services/api';
-import { Building2, Eye, EyeOff } from 'lucide-react';
+import { publicApi, resolveUrl, getWhatsappNumber } from '../../services/api';
+import { Building2, Eye, EyeOff, MessageCircle } from 'lucide-react';
 
 export default function LoginPage() {
   const { login, user, isAuthenticated } = useAuth();
@@ -84,6 +84,11 @@ export default function LoginPage() {
             <p style={{ textAlign: 'center', marginTop: '16px', fontSize: '14px', color: 'var(--text-secondary)' }}>
               New customer? <Link to="/register" style={{ color: 'var(--primary)', fontWeight: 500 }}>Create an account</Link>
             </p>
+            <div style={{ textAlign: 'center', marginTop: '12px' }}>
+              <a href={`https://wa.me/${getWhatsappNumber()}`} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: '#25D366', fontSize: '13px', textDecoration: 'none' }}>
+                <MessageCircle size={16} /> Contact via WhatsApp
+              </a>
+            </div>
           </div>
         </div>
       </div>
