@@ -114,6 +114,7 @@ export default function BorrowerLoanDetailPage() {
   const handleDownloadStatement = () => {
     if (!loan) return;
     const companyName = companyInfo?.companyName || 'Shree Shree Group';
+    const customerName = loan.customer?.name || '';
     const win = window.open('', '_blank');
     if (!win) return;
     const rows = (loan.collections || []).map((c: any) => `
@@ -121,13 +122,10 @@ export default function BorrowerLoanDetailPage() {
         <td>${new Date(c.collectionDate || c.createdAt).toLocaleDateString()}</td>
         <td>${c.receipt?.receiptNo || '-'}</td>
         <td style="text-align:right">₹${c.amount.toLocaleString()}</td>
-        <td style="text-align:right">₹${(c.balanceAfter ?? '-').toLocaleString()}</td>
+        <td style="text-align:right">₹${c.balanceAfter?.toLocaleString() || '-'}</td>
       </tr>
     `).join('');
     const totalPaid = (loan.collections || []).reduce((s: number, c: any) => s + (c.amount || 0), 0);
-    const logoHtml = companyInfo?.logo
-      ? `<div style="text-align:center;margin-bottom:8px"><img src="${API_BASE}/public/logo" style="max-height:50px"/></div>`
-      : '';
     win.document.write(`
       <html><head><title>Statement - ${loan.loanNumber}</title>
       <style>
@@ -142,12 +140,13 @@ export default function BorrowerLoanDetailPage() {
         .footer { text-align: center; margin-top: 30px; font-size: 12px; color: #666; }
         @media print { .no-print { display: none; } }
       </style></head><body>
-        ${logoHtml}
+        <div style="text-align:center;margin-bottom:8px"><img src="${API_BASE}/public/logo" style="max-height:50px" onerror="this.style.display='none'"/></div>
         <h2>${companyName}</h2>
         <p style="text-align:center;margin-bottom:20px">Loan Payment Statement</p>
         <table class="info">
-          <tr><td><b>Loan #:</b></td><td>${loan.loanNumber}</td><td><b>Amount:</b></td><td>₹${loan.amount.toLocaleString()}</td></tr>
-          <tr><td><b>Disbursed:</b></td><td>₹${loan.disbursedAmount?.toLocaleString()}</td><td><b>Status:</b></td><td>${loan.status}</td></tr>
+          <tr><td><b>Customer:</b></td><td>${customerName}</td><td><b>Loan #:</b></td><td>${loan.loanNumber}</td></tr>
+          <tr><td><b>Amount:</b></td><td>₹${loan.amount.toLocaleString()}</td><td><b>Disbursed:</b></td><td>₹${loan.disbursedAmount?.toLocaleString()}</td></tr>
+          <tr><td><b>Status:</b></td><td>${loan.status}</td><td></td><td></td></tr>
         </table>
         <table>
           <thead><tr><th>Date</th><th>Receipt</th><th style="text-align:right">Amount</th><th style="text-align:right">Balance</th></tr></thead>
