@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { borrowerApi, receiptApi, loanApi, publicApi, API_BASE } from '../../services/api';
-import { ArrowLeft, Receipt, Printer, FileText } from 'lucide-react';
+import { ArrowLeft, Receipt, Printer, FileText, Download } from 'lucide-react';
 
 export default function BorrowerLoanDetailPage() {
   const { id } = useParams();
@@ -111,6 +111,59 @@ export default function BorrowerLoanDetailPage() {
     } catch {}
   };
 
+  const handleDownloadStatement = () => {
+    if (!loan) return;
+    const companyName = companyInfo?.companyName || 'Shree Shree Group';
+    const win = window.open('', '_blank');
+    if (!win) return;
+    const rows = (loan.collections || []).map((c: any) => `
+      <tr>
+        <td>${new Date(c.collectionDate || c.createdAt).toLocaleDateString()}</td>
+        <td>${c.receipt?.receiptNo || '-'}</td>
+        <td style="text-align:right">₹${c.amount.toLocaleString()}</td>
+        <td style="text-align:right">₹${(c.balanceAfter ?? '-').toLocaleString()}</td>
+      </tr>
+    `).join('');
+    const totalPaid = (loan.collections || []).reduce((s: number, c: any) => s + (c.amount || 0), 0);
+    const logoHtml = companyInfo?.logo
+      ? `<div style="text-align:center;margin-bottom:8px"><img src="${API_BASE}/public/logo" style="max-height:50px"/></div>`
+      : '';
+    win.document.write(`
+      <html><head><title>Statement - ${loan.loanNumber}</title>
+      <style>
+        body { font-family: Arial, sans-serif; padding: 30px; max-width: 700px; margin: auto; }
+        h2 { text-align: center; margin: 4px 0; }
+        .info { margin: 20px 0; width: 100%; }
+        .info td { padding: 4px 8px; font-size: 13px; }
+        table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+        th, td { padding: 8px 10px; border: 1px solid #ccc; font-size: 13px; }
+        th { background: #f5f5f5; text-align: left; }
+        .total-row { font-weight: bold; background: #f9f9f9; }
+        .footer { text-align: center; margin-top: 30px; font-size: 12px; color: #666; }
+        @media print { .no-print { display: none; } }
+      </style></head><body>
+        ${logoHtml}
+        <h2>${companyName}</h2>
+        <p style="text-align:center;margin-bottom:20px">Loan Payment Statement</p>
+        <table class="info">
+          <tr><td><b>Loan #:</b></td><td>${loan.loanNumber}</td><td><b>Amount:</b></td><td>₹${loan.amount.toLocaleString()}</td></tr>
+          <tr><td><b>Disbursed:</b></td><td>₹${loan.disbursedAmount?.toLocaleString()}</td><td><b>Status:</b></td><td>${loan.status}</td></tr>
+        </table>
+        <table>
+          <thead><tr><th>Date</th><th>Receipt</th><th style="text-align:right">Amount</th><th style="text-align:right">Balance</th></tr></thead>
+          <tbody>${rows || '<tr><td colspan="4" style="text-align:center">No payments yet</td></tr>'}</tbody>
+          <tfoot><tr class="total-row"><td colspan="2">Total Paid</td><td style="text-align:right">₹${totalPaid.toLocaleString()}</td><td></td></tr></tfoot>
+        </table>
+        <div class="footer">Generated on ${new Date().toLocaleString()}</div>
+        <div class="no-print" style="text-align:center;margin-top:20px">
+          <button onclick="window.print()" style="padding:8px 24px;cursor:pointer">Print / Save as PDF</button>
+        </div>
+      </body></html>
+    `);
+    win.document.close();
+    win.print();
+  };
+
   if (loading) return <p className="text-secondary">Loading loan details...</p>;
   if (!loan) return <p className="text-secondary">Loan not found</p>;
 
@@ -151,18 +204,16 @@ export default function BorrowerLoanDetailPage() {
         </div>
       </div>
 
-      {loan.status === 'CLOSED' && (
-        <div className="card mb-4" style={{ borderColor: 'var(--success)' }}>
-          <div className="card-body" style={{ textAlign: 'center', padding: '20px' }}>
-            <p style={{ color: 'var(--success)', fontWeight: 600, marginBottom: '12px' }}>
-              This loan has been fully closed. You can download the No Objection Certificate (NOC).
-            </p>
-            <button className="btn btn-primary" onClick={printNoc}>
-              <FileText size={18} /> Download NOC
-            </button>
-          </div>
-        </div>
-      )}
+      <div className="flex gap-2 flex-wrap mb-4">
+        <button className="btn btn-secondary" onClick={handleDownloadStatement}>
+          <Download size={18} /> Download Statement
+        </button>
+        {loan.status === 'CLOSED' && (
+          <button className="btn btn-primary" onClick={printNoc}>
+            <FileText size={18} /> Download NOC
+          </button>
+        )}
+      </div>
 
       <div className="card">
         <div className="card-header"><h3 className="card-title">Collection History</h3></div>
