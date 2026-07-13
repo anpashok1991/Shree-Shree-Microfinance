@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { loanApi } from '../../services/api';
+import { loanApi, publicApi, API_BASE } from '../../services/api';
 import Loading from '../../components/common/Loading';
 import Modal from '../../components/common/Modal';
-import { ArrowLeft, CheckCircle, XCircle, RotateCcw, Edit, Save, X, Ban } from 'lucide-react';
+import { ArrowLeft, CheckCircle, XCircle, RotateCcw, Edit, Save, X, Ban, FileText } from 'lucide-react';
 
 export default function LoanDetailPage() {
   const { id } = useParams();
@@ -65,12 +65,67 @@ export default function LoanDetailPage() {
     try {
       const res = await loanApi.getById(id!);
       const l = res.data;
-      const chargePercent = parseFloat(l.foreclosureChargePercent) || 0;
+      const chargePercent = l.foreclosureChargePercent !== undefined ? l.foreclosureChargePercent : 0;
       const outstanding = l.outstanding || 0;
       const charge = (outstanding * chargePercent) / 100;
       setForecloseData({ outstanding, chargePercent, charge, total: outstanding + charge });
       setShowForeclose(true);
     } catch { alert('Could not load loan data'); }
+  };
+
+  const handlePrintNoc = async () => {
+    try {
+      const res = await loanApi.generateNoc(id!);
+      const noc = res.data;
+      const logoRes = await publicApi.getCompanyInfo();
+      const logoUrl = logoRes.data?.logo || '';
+      const printWin = window.open('', '_blank');
+      if (!printWin) return;
+      printWin.document.write(`
+        <html><head><title>NOC - ${noc.nocNumber}</title>
+        <style>
+          body { font-family: 'Georgia', serif; padding: 50px; max-width: 700px; margin: auto; line-height: 1.8; }
+          .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #000; padding-bottom: 20px; }
+          .header img { max-height: 60px; margin-bottom: 8px; }
+          h1 { font-size: 22px; margin: 4px 0; }
+          h2 { font-size: 16px; text-align: center; margin: 30px 0 20px; text-decoration: underline; }
+          table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+          th, td { padding: 8px 12px; border: 1px solid #333; text-align: left; }
+          th { background: #f5f5f5; }
+          .footer { margin-top: 40px; text-align: center; font-size: 13px; color: #666; }
+          .signature { margin-top: 50px; display: flex; justify-content: space-between; }
+          .signature div { text-align: center; }
+        </style></head><body>
+          <div class="header">
+            ${logoUrl ? `<img src="${API_BASE}/public/logo" alt="Logo" />` : ''}
+            <h1>${noc.companyName}</h1>
+            <div>${noc.companyAddress}</div>
+          </div>
+          <h2>NO OBJECTION CERTIFICATE</h2>
+          <p style="text-align:justify">This is to certify that <b>${noc.customerName}</b> of <b>${noc.customerAddress}</b> had availed a loan (Loan No: <b>${noc.loanNumber}</b>) of ₹${noc.loanAmount?.toLocaleString()} from ${noc.companyName}. The loan has been fully repaid and closed on ${noc.loanClosedDate ? new Date(noc.loanClosedDate).toLocaleDateString() : '-'}.</p>
+          <p style="text-align:justify">The said borrower has no outstanding dues payable to the company. This NOC is issued as a no-objection from the company's side for the borrower to utilize the loan closure for any future financial purposes.</p>
+          <table>
+            <tr><th>Loan Number</th><td>${noc.loanNumber}</td></tr>
+            <tr><th>Borrower Name</th><td>${noc.customerName}</td></tr>
+            <tr><th>Loan Amount</th><td>₹${noc.loanAmount?.toLocaleString()}</td></tr>
+            <tr><th>Disbursed Amount</th><td>₹${noc.disbursedAmount?.toLocaleString()}</td></tr>
+            <tr><th>Total Repaid</th><td>₹${noc.totalPaid?.toLocaleString()}</td></tr>
+            <tr><th>Loan Start Date</th><td>${noc.loanStartDate ? new Date(noc.loanStartDate).toLocaleDateString() : '-'}</td></tr>
+            <tr><th>Loan Closed Date</th><td>${noc.loanClosedDate ? new Date(noc.loanClosedDate).toLocaleDateString() : '-'}</td></tr>
+            <tr><th>NOC Number</th><td>${noc.nocNumber}</td></tr>
+            <tr><th>Issue Date</th><td>${new Date(noc.issuedDate).toLocaleDateString()}</td></tr>
+          </table>
+          <p style="text-align:justify">The company has no objection to the borrower availing any future loans or financial facilities from any other institution.</p>
+          <div class="signature">
+            <div><br/><br/><br/>________________<br/>Authorized Signatory</div>
+            <div><br/><br/><br/>________________<br/>Borrower</div>
+          </div>
+          <div class="footer">This is a system-generated certificate and does not require a physical signature.</div>
+        </body></html>
+      `);
+      printWin.document.close();
+      printWin.print();
+    } catch (err: any) { alert(err.response?.data?.message || 'Failed to generate NOC'); }
   };
 
   const handleSaveEdit = async () => {
@@ -169,6 +224,14 @@ export default function LoanDetailPage() {
           </button>
           <button className="btn btn-secondary" onClick={openForeclose} title="Close the loan early with a foreclosure charge (if any)">
             <Ban size={18} /> Foreclose Loan
+          </button>
+        </div>
+      )}
+
+      {loan.status === 'CLOSED' && (
+        <div className="flex gap-2 mb-4">
+          <button className="btn btn-primary" onClick={handlePrintNoc} title="Download No Objection Certificate for this closed loan">
+            <FileText size={18} /> Download NOC
           </button>
         </div>
       )}

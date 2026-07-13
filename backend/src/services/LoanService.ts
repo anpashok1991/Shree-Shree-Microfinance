@@ -3,6 +3,7 @@ import { CustomerRepository } from '../repositories/CustomerRepository';
 import { AuditRepository } from '../repositories/AuditRepository';
 import { SettingsRepository } from '../repositories/SettingsRepository';
 import { NotFoundError, AppError } from '../utils/errors';
+import { prisma } from '../config/prisma';
 import {
   generateLoanNumber,
   generateRenewalNumber,
@@ -182,7 +183,8 @@ export class LoanService {
   async getLoanDetails(loanId: string) {
     const loan = await this.loanRepo.getLoanHistory(loanId);
     if (!loan) throw new NotFoundError('Loan not found');
-    return loan;
+    const foreclosureChargePercent = await this.settingsRepo.getNumberValue('foreclosure_charge_percent', 0);
+    return { ...loan, foreclosureChargePercent };
   }
 
   async forecloseLoan(loanId: string, foreclosedById: string) {
@@ -329,6 +331,21 @@ export class LoanService {
     return this.customerRepo.findByUserId(userId);
   }
 
+  async findCustomerByUserIdOrEmail(userId: string, email: string) {
+    let customer = await this.customerRepo.findByUserId(userId);
+    if (!customer) {
+      // fallback: try to find customer by matching email/name
+      const user = await prisma.user.findUnique({ where: { id: userId } });
+      if (user) {
+        customer = await this.customerRepo.findFirst({
+          mobile: user.phone,
+          isDeleted: false,
+        });
+      }
+    }
+    return customer;
+  }
+
   async calculateLoanAmount(amount: number) {
     const fileChargePercent = await this.settingsRepo.getNumberValue('file_charge_percent', 3);
     const tenure = await this.settingsRepo.getNumberValue('loan_tenure_days', 100);
@@ -353,5 +370,29 @@ export class LoanService {
       },
       include: { customer: true },
     });
+  }
+
+  async generateNoc(loanId: string) {
+    const loan = await this.loanRepo.getLoanHistory(loanId);
+    if (!loan) throw new NotFoundError('Loan not found');
+    if (loan.status !== 'CLOSED') throw new AppError('NOC is only available for closed loans', 400);
+
+    const companyName = await this.settingsRepo.getValue('company_name', 'Shree Shree Group');
+    const companyAddress = await this.settingsRepo.getValue('company_address', '');
+
+    return {
+      companyName,
+      companyAddress,
+      nocNumber: `NOC-${loan.loanNumber}-${loan.closedAt ? new Date(loan.closedAt).toISOString().slice(0, 10).replace(/-/g, '') : Date.now()}`,
+      loanNumber: loan.loanNumber,
+      customerName: loan.customer?.name || '',
+      customerAddress: [loan.customer?.address, loan.customer?.village, loan.customer?.district, loan.customer?.state].filter(Boolean).join(', '),
+      loanAmount: loan.amount,
+      disbursedAmount: loan.disbursedAmount,
+      totalPaid: loan.totalPaid,
+      loanStartDate: loan.startDate,
+      loanClosedDate: loan.closedAt,
+      issuedDate: new Date(),
+    };
   }
 }

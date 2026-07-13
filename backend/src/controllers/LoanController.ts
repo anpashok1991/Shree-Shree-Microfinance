@@ -26,7 +26,7 @@ export class LoanController {
       const { page, limit, status, customerId, staffId } = req.query;
       let resolvedCustomerId = customerId as string;
       if (customerId === 'me' && req.user?.role === 'BORROWER') {
-        const customer = await this.loanService.findCustomerByUserId(req.user.userId);
+        const customer = await this.loanService.findCustomerByUserIdOrEmail(req.user.userId, req.user.email || '');
         if (!customer) return res.json({ success: true, data: [], pagination: { page: 1, limit: 10, total: 0, totalPages: 0 } });
         resolvedCustomerId = customer.id;
       }
@@ -131,6 +131,15 @@ export class LoanController {
     try {
       const loan = await this.loanService.updateLoan(req.params.id as string, req.body, req.user!.userId);
       res.json({ success: true, message: 'Loan updated', data: loan });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  generateNoc = async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+      const noc = await this.loanService.generateNoc(req.params.id as string);
+      res.json({ success: true, data: noc });
     } catch (error) {
       next(error);
     }

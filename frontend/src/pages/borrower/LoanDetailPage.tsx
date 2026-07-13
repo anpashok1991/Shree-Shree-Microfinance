@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { borrowerApi, receiptApi } from '../../services/api';
-import { ArrowLeft, Receipt, Printer } from 'lucide-react';
+import { borrowerApi, receiptApi, loanApi, publicApi, API_BASE } from '../../services/api';
+import { ArrowLeft, Receipt, Printer, FileText } from 'lucide-react';
 
 export default function BorrowerLoanDetailPage() {
   const { id } = useParams();
@@ -24,9 +24,19 @@ export default function BorrowerLoanDetailPage() {
     } catch {}
   };
 
+  const [companyInfo, setCompanyInfo] = useState<any>(null);
+
+  useEffect(() => {
+    publicApi.getCompanyInfo().then(r => setCompanyInfo(r.data)).catch(() => {});
+  }, []);
+
   const printReceipt = () => {
     const printWin = window.open('', '_blank');
     if (!printWin || !receipt) return;
+    const logoHtml = companyInfo?.logo
+      ? `<div style="text-align:center;margin-bottom:8px"><img src="${API_BASE}/public/logo" style="max-height:50px"/></div>`
+      : '';
+    const companyName = companyInfo?.companyName || 'Shree Shree Group';
     printWin.document.write(`
       <html><head><title>Receipt ${receipt.receiptNo}</title>
       <style>
@@ -39,12 +49,14 @@ export default function BorrowerLoanDetailPage() {
         .footer { text-align: center; margin-top: 30px; font-size: 12px; color: #666; }
         hr { border: none; border-top: 1px dashed #000; margin: 16px 0; }
       </style></head><body>
-        <h2>${loan?.customer?.name || receipt.customerName}</h2>
+        ${logoHtml}
+        <h2>${companyName}</h2>
         <div class="center">Payment Receipt</div>
         <hr/>
         <table>
           <tr><td>Receipt No</td><td><b>${receipt.receiptNo}</b></td></tr>
           <tr><td>Date</td><td>${new Date(receipt.createdAt).toLocaleDateString()}</td></tr>
+          <tr><td>Customer</td><td>${receipt.customerName}</td></tr>
           <tr><td>Loan No</td><td>${receipt.loanId ? (loan?.loanNumber || '') : ''}</td></tr>
           <tr><td>Amount</td><td class="total">₹${receipt.amount.toLocaleString()}</td></tr>
           <tr><td>Balance Before</td><td>₹${receipt.balanceBefore.toLocaleString()}</td></tr>
@@ -56,6 +68,47 @@ export default function BorrowerLoanDetailPage() {
     `);
     printWin.document.close();
     printWin.print();
+  };
+
+  const printNoc = async () => {
+    if (!id) return;
+    try {
+      const res = await loanApi.generateNoc(id);
+      const noc = res.data;
+      const printWin = window.open('', '_blank');
+      if (!printWin) return;
+      const logoHtml = companyInfo?.logo
+        ? `<div style="text-align:center;margin-bottom:8px"><img src="${API_BASE}/public/logo" style="max-height:60px"/></div>`
+        : '';
+      printWin.document.write(`
+        <html><head><title>NOC - ${noc.nocNumber}</title>
+        <style>
+          body { font-family: 'Georgia', serif; padding: 50px; max-width: 700px; margin: auto; line-height: 1.8; }
+          .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #000; padding-bottom: 20px; }
+          h1 { font-size: 22px; margin: 4px 0; }
+          h2 { font-size: 16px; text-align: center; margin: 30px 0 20px; text-decoration: underline; }
+          table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+          th, td { padding: 8px 12px; border: 1px solid #333; text-align: left; }
+          th { background: #f5f5f5; }
+          .footer { margin-top: 40px; text-align: center; font-size: 13px; color: #666; }
+          .signature { margin-top: 50px; display: flex; justify-content: space-between; }
+        </style></head><body>
+          <div class="header">
+            ${logoHtml}
+            <h1>${noc.companyName}</h1>
+            <div>${noc.companyAddress}</div>
+          </div>
+          <h2>NO OBJECTION CERTIFICATE</h2>
+          <p style="text-align:justify">This is to certify that <b>${noc.customerName}</b> of <b>${noc.customerAddress}</b> had availed a loan (Loan No: <b>${noc.loanNumber}</b>) of ₹${noc.loanAmount?.toLocaleString()} from ${noc.companyName}. The loan has been fully repaid and closed on ${noc.loanClosedDate ? new Date(noc.loanClosedDate).toLocaleDateString() : '-'}.</p>
+          <p style="text-align:justify">The said borrower has no outstanding dues payable to the company. This NOC is issued as a no-objection from the company's side for the borrower to utilize the loan closure for any future financial purposes.</p>
+          <table><tr><th>Loan Number</th><td>${noc.loanNumber}</td></tr><tr><th>Borrower Name</th><td>${noc.customerName}</td></tr><tr><th>Loan Amount</th><td>₹${noc.loanAmount?.toLocaleString()}</td></tr><tr><th>Disbursed Amount</th><td>₹${noc.disbursedAmount?.toLocaleString()}</td></tr><tr><th>Total Repaid</th><td>₹${noc.totalPaid?.toLocaleString()}</td></tr><tr><th>Loan Start Date</th><td>${noc.loanStartDate ? new Date(noc.loanStartDate).toLocaleDateString() : '-'}</td></tr><tr><th>Loan Closed Date</th><td>${noc.loanClosedDate ? new Date(noc.loanClosedDate).toLocaleDateString() : '-'}</td></tr><tr><th>NOC Number</th><td>${noc.nocNumber}</td></tr><tr><th>Issue Date</th><td>${new Date(noc.issuedDate).toLocaleDateString()}</td></tr></table>
+          <div class="signature"><div><br/><br/><br/>________________<br/>Authorized Signatory</div><div><br/><br/><br/>________________<br/>Borrower</div></div>
+          <div class="footer">This is a system-generated certificate.</div>
+        </body></html>
+      `);
+      printWin.document.close();
+      printWin.print();
+    } catch {}
   };
 
   if (loading) return <p className="text-secondary">Loading loan details...</p>;
@@ -97,6 +150,19 @@ export default function BorrowerLoanDetailPage() {
           </div>
         </div>
       </div>
+
+      {loan.status === 'CLOSED' && (
+        <div className="card mb-4" style={{ borderColor: 'var(--success)' }}>
+          <div className="card-body" style={{ textAlign: 'center', padding: '20px' }}>
+            <p style={{ color: 'var(--success)', fontWeight: 600, marginBottom: '12px' }}>
+              This loan has been fully closed. You can download the No Objection Certificate (NOC).
+            </p>
+            <button className="btn btn-primary" onClick={printNoc}>
+              <FileText size={18} /> Download NOC
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="card">
         <div className="card-header"><h3 className="card-title">Collection History</h3></div>

@@ -1,11 +1,12 @@
 import type { FormEvent } from 'react';
 import { useState, useEffect } from 'react';
-import { collectionApi, loanApi, customerApi, receiptApi, whatsappLink } from '../../services/api';
+import { collectionApi, loanApi, customerApi, receiptApi, whatsappLink, publicApi, API_BASE } from '../../services/api';
 import { Search, IndianRupee, Printer, XCircle, MessageCircle, Eye } from 'lucide-react';
 import DataTable from '../../components/common/DataTable';
 import Modal from '../../components/common/Modal';
 
 export default function CollectionPage() {
+  const [companyInfo, setCompanyInfo] = useState<any>({ companyName: 'Shree Shree Group' });
   const [customers, setCustomers] = useState<any[]>([]);
   const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
   const [loan, setLoan] = useState<any>(null);
@@ -23,6 +24,7 @@ export default function CollectionPage() {
   useEffect(() => {
     collectionApi.getAll({ limit: 10 }).then((r) => setRecent(r.data)).catch(console.error);
     customerApi.getAll({ limit: 100 }).then((r) => setCustomers(r.data)).catch(console.error);
+    publicApi.getCompanyInfo().then((r) => r.data && setCompanyInfo(r.data)).catch(() => {});
   }, []);
 
   const filtered = customers.filter((c) =>
@@ -99,6 +101,9 @@ export default function CollectionPage() {
     } catch { alert('Failed to load receipt'); }
   };
 
+  const receiptLogoHtml = companyInfo?.logo
+    ? `<div style="text-align:center;margin-bottom:6px"><img src="${API_BASE}/public/logo" style="max-height:45px"/></div>`
+    : '';
   const printReceiptHtml = (r: any, collection: any) => `
     <html><head><title>Receipt ${r.receiptNo}</title>
     <style>
@@ -113,9 +118,9 @@ export default function CollectionPage() {
       .footer { text-align: center; font-size: 11px; margin-top: 8px; color: #666; }
       @media print { .no-print { display: none; } }
     </style></head><body>
-    <h2>Shree Shree Group</h2>
-    <p class="center">Microfinance System</p>
-    <p class="center"><strong>RECEIPT</strong></p>
+    ${receiptLogoHtml}
+    <h2>${companyInfo?.companyName || 'Shree Shree Group'}</h2>
+    <p class="center">Payment Receipt</p>
     <hr/>
     <table>
       <tr><td>Receipt #</td><td class="right bold">${r.receiptNo}</td></tr>

@@ -21,5 +21,6 @@ router.put('/:id/return', authorize('SUPER_ADMIN', 'ADMIN', 'MANAGER'), validate
 router.put('/:id', authorize('SUPER_ADMIN', 'ADMIN', 'MANAGER'), validate(updateLoanSchema), controller.updateLoan);
 router.post('/:id/renew', authorize('SUPER_ADMIN', 'ADMIN'), controller.renewLoan);
 router.post('/:id/foreclose', authorize('SUPER_ADMIN', 'ADMIN'), controller.forecloseLoan);
+router.get('/:id/noc', authorize('SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STAFF', 'BORROWER'), controller.generateNoc);
 
 export default router;
