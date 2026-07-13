@@ -1,26 +1,38 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { borrowerApi, uploadApi } from '../../services/api';
 import { Calculator } from 'lucide-react';
 
 export default function ApplyLoanPage() {
   const navigate = useNavigate();
   const [checking, setChecking] = useState(true);
+  const [noProfile, setNoProfile] = useState(false);
   const [amount, setAmount] = useState('');
-
-  useEffect(() => {
-    borrowerApi.getProfile()
-      .then((r) => { if (!r.data) navigate('/borrower/profile'); })
-      .catch(() => navigate('/borrower/profile'))
-      .finally(() => setChecking(false));
-  }, []);
-
-  if (checking) return <p className="text-secondary">Checking profile...</p>;
   const [calculation, setCalculation] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState('');
   const [success, setSuccess] = useState('');
   const [files, setFiles] = useState<{ aadhaar?: File; pan?: File; photo?: File }>({});
+
+  useEffect(() => {
+    borrowerApi.getProfile()
+      .then((r) => { if (!r) setNoProfile(true); })
+      .catch(() => setNoProfile(true))
+      .finally(() => setChecking(false));
+  }, []);
+
+  if (checking) return <p className="text-secondary">Checking profile...</p>;
+  if (noProfile) return (
+    <div className="card" style={{ maxWidth: '500px', textAlign: 'center', padding: '40px' }}>
+      <h2 style={{ marginBottom: '12px' }}>Profile Required</h2>
+      <p style={{ color: 'var(--text-secondary)', marginBottom: '20px' }}>
+        Please complete your profile before applying for a loan.
+      </p>
+      <Link to="/borrower/profile" className="btn btn-primary">
+        Go to My Profile
+      </Link>
+    </div>
+  );
 
   const calculate = () => {
     const amt = parseFloat(amount);

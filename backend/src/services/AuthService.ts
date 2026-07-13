@@ -136,7 +136,7 @@ export class AuthService {
         data: {
           customerId,
           name: data.name,
-          fatherName: data.name,
+          fatherName: '',
           mobile: data.phone,
           aadhaarNumber: data.aadhaarNumber || `TEMP-${Date.now()}`,
           address: data.address || '',
