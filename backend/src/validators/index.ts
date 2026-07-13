@@ -15,14 +15,14 @@ export const createUserSchema = z.object({
   password: z.string().min(6, 'Password must be at least 6 characters'),
   name: z.string().min(2, 'Name must be at least 2 characters'),
   phone: z.string().min(10, 'Invalid phone number'),
-  role: z.enum(['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STAFF', 'VIEWER']),
+  role: z.enum(['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STAFF', 'VIEWER', 'BORROWER']),
   areaIds: z.array(z.string()).optional(),
 });
 
 export const updateUserSchema = z.object({
   name: z.string().min(2).optional(),
   phone: z.string().min(10).optional(),
-  role: z.enum(['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STAFF', 'VIEWER']).optional(),
+  role: z.enum(['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STAFF', 'VIEWER', 'BORROWER']).optional(),
   areaIds: z.array(z.string()).optional(),
 });
 

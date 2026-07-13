@@ -137,6 +137,7 @@ export default function UserListPage() {
               <option value="MANAGER">Manager</option>
               <option value="ADMIN">Admin</option>
               <option value="VIEWER">Viewer</option>
+              <option value="BORROWER">Customer</option>
             </select>
           </div>
           <button className="btn btn-primary btn-block" type="submit">{editingUser ? 'Update User' : 'Create User'}</button>

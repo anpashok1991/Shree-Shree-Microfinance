@@ -1,8 +1,9 @@
 import type { FormEvent } from 'react';
 import { useState, useEffect } from 'react';
 import { collectionApi, loanApi, customerApi, receiptApi, whatsappLink } from '../../services/api';
-import { Search, IndianRupee, Printer, XCircle, MessageCircle } from 'lucide-react';
+import { Search, IndianRupee, Printer, XCircle, MessageCircle, Eye } from 'lucide-react';
 import DataTable from '../../components/common/DataTable';
+import Modal from '../../components/common/Modal';
 
 export default function CollectionPage() {
   const [customers, setCustomers] = useState<any[]>([]);
@@ -16,6 +17,8 @@ export default function CollectionPage() {
   const [search, setSearch] = useState('');
   const [recent, setRecent] = useState<any[]>([]);
   const [tab, setTab] = useState<'record' | 'history'>('record');
+  const [lastReceipt, setLastReceipt] = useState<any>(null);
+  const [viewReceipt, setViewReceipt] = useState<any>(null);
 
   useEffect(() => {
     collectionApi.getAll({ limit: 10 }).then((r) => setRecent(r.data)).catch(console.error);
@@ -31,6 +34,7 @@ export default function CollectionPage() {
     setSelectedCustomer(c);
     setSearch('');
     setMessage('');
+    setLastReceipt(null);
     try {
       const res = await loanApi.getAll({ customerId: c.id, status: 'ACTIVE', limit: 1 });
       if (res.data?.[0]) {
@@ -48,6 +52,7 @@ export default function CollectionPage() {
     if (!selectedCustomer || !loan) return;
     setSaving(true);
     setMessage('');
+    setLastReceipt(null);
     try {
       const res = await collectionApi.create({
         loanId: loan.id,
@@ -56,7 +61,13 @@ export default function CollectionPage() {
         remarks,
         collectionDate,
       });
-      setMessage(`Collection recorded! Receipt: ${res.data?.receipt?.receiptNo || ''}`);
+      const receiptData = res.data?.receipt;
+      if (receiptData) {
+        setLastReceipt(receiptData);
+        setViewReceipt(receiptData);
+      } else {
+        setMessage(`Collection recorded!`);
+      }
       setAmount(0);
       setRemarks('');
       setSelectedCustomer(null);
@@ -77,53 +88,67 @@ export default function CollectionPage() {
     }
   };
 
-  const handlePrintReceipt = async (collection: any) => {
+  const fetchReceipt = async (collection: any) => {
     try {
       const res = await receiptApi.getByCollection(collection.id);
-      const r = res.data;
-      if (!r) { alert('Receipt not found'); return; }
-
-      const win = window.open('', '_blank');
-      if (!win) { alert('Please allow popups'); return; }
-
-      win.document.write(`
-        <html><head><title>Receipt ${r.receiptNo}</title>
-        <style>
-          body { font-family: 'Courier New', monospace; max-width: 300px; margin: 20px auto; padding: 10px; }
-          h2 { text-align: center; margin: 0 0 4px; font-size: 16px; }
-          .center { text-align: center; font-size: 12px; margin: 2px 0; }
-          hr { border: dashed 1px #999; }
-          table { width: 100%; font-size: 12px; }
-          td { padding: 2px 4px; }
-          .right { text-align: right; }
-          .bold { font-weight: bold; }
-          .footer { text-align: center; font-size: 11px; margin-top: 8px; color: #666; }
-          @media print { .no-print { display: none; } }
-        </style></head><body>
-        <h2>Shree Shree Group</h2>
-        <p class="center">Microfinance System</p>
-        <p class="center"><strong>RECEIPT</strong></p>
-        <hr/>
-        <table>
-          <tr><td>Receipt #</td><td class="right bold">${r.receiptNo}</td></tr>
-          <tr><td>Date</td><td class="right">${new Date(collection.collectionDate).toLocaleDateString()}</td></tr>
-          <tr><td>Customer</td><td class="right">${r.customerName}</td></tr>
-          <tr><td>Loan #</td><td class="right">${collection.loan?.loanNumber || '-'}</td></tr>
-          <tr><td>Amount</td><td class="right bold">₹${r.amount.toLocaleString()}</td></tr>
-          <tr><td>Balance Before</td><td class="right">₹${r.balanceBefore.toLocaleString()}</td></tr>
-          <tr><td>Balance After</td><td class="right">₹${r.balanceAfter.toLocaleString()}</td></tr>
-          ${collection.remarks ? `<tr><td>Remarks</td><td class="right">${collection.remarks}</td></tr>` : ''}
-        </table>
-        <hr/>
-        <p class="center">Thank you for your payment!</p>
-        <p class="footer">Generated on ${new Date().toLocaleString()}</p>
-        <div class="no-print" style="text-align:center;margin-top:16px">
-          <button onclick="window.print()" style="padding:8px 24px;cursor:pointer">Print</button>
-        </div>
-        <script>window.onload = function() { setTimeout(function() { window.print(); }, 500); }</script>
-      </body></html>`);
-      win.document.close();
+      if (res.data) {
+        setViewReceipt(res.data);
+      } else {
+        alert('Receipt not found');
+      }
     } catch { alert('Failed to load receipt'); }
+  };
+
+  const printReceiptHtml = (r: any, collection: any) => `
+    <html><head><title>Receipt ${r.receiptNo}</title>
+    <style>
+      body { font-family: 'Courier New', monospace; max-width: 300px; margin: 20px auto; padding: 10px; }
+      h2 { text-align: center; margin: 0 0 4px; font-size: 16px; }
+      .center { text-align: center; font-size: 12px; margin: 2px 0; }
+      hr { border: dashed 1px #999; }
+      table { width: 100%; font-size: 12px; }
+      td { padding: 2px 4px; }
+      .right { text-align: right; }
+      .bold { font-weight: bold; }
+      .footer { text-align: center; font-size: 11px; margin-top: 8px; color: #666; }
+      @media print { .no-print { display: none; } }
+    </style></head><body>
+    <h2>Shree Shree Group</h2>
+    <p class="center">Microfinance System</p>
+    <p class="center"><strong>RECEIPT</strong></p>
+    <hr/>
+    <table>
+      <tr><td>Receipt #</td><td class="right bold">${r.receiptNo}</td></tr>
+      <tr><td>Date</td><td class="right">${new Date(collection?.collectionDate || r.createdAt).toLocaleDateString()}</td></tr>
+      <tr><td>Customer</td><td class="right">${r.customerName}</td></tr>
+      <tr><td>Loan #</td><td class="right">${collection?.loan?.loanNumber || '-'}</td></tr>
+      <tr><td>Amount</td><td class="right bold">₹${r.amount.toLocaleString()}</td></tr>
+      <tr><td>Balance Before</td><td class="right">₹${r.balanceBefore.toLocaleString()}</td></tr>
+      <tr><td>Balance After</td><td class="right">₹${r.balanceAfter.toLocaleString()}</td></tr>
+      ${collection?.remarks ? `<tr><td>Remarks</td><td class="right">${collection.remarks}</td></tr>` : ''}
+    </table>
+    <hr/>
+    <p class="center">Thank you for your payment!</p>
+    <p class="footer">Generated on ${new Date().toLocaleString()}</p>
+    <div class="no-print" style="text-align:center;margin-top:16px">
+      <button onclick="window.print()" style="padding:8px 24px;cursor:pointer">Print</button>
+    </div>
+  </body></html>`;
+
+  const handlePrintReceipt = async (collection?: any) => {
+    const r = viewReceipt;
+    if (!r) { alert('No receipt to print'); return; }
+    const win = window.open('', '_blank');
+    if (!win) { alert('Please allow popups'); return; }
+    win.document.write(printReceiptHtml(r, collection));
+    win.document.close();
+  };
+
+  const handleWhatsAppReceipt = (collection: any) => {
+    const phone = collection.customer?.mobile;
+    if (!phone) { alert('Customer mobile not available'); return; }
+    const msg = `Dear ${collection.customer?.name}, your payment of ₹${collection.amount} has been received. Receipt: ${collection.receipt?.receiptNo || collection.collectionNo}`;
+    window.open(whatsappLink(phone, msg), '_blank');
   };
 
   const columns = [
@@ -136,10 +161,10 @@ export default function CollectionPage() {
     {
       key: 'actions', label: 'Actions', render: (r: any) => (
         <div className="table-actions">
-          <button className="btn btn-sm btn-secondary" onClick={(e) => { e.stopPropagation(); handlePrintReceipt(r); }} title="Print Receipt">
-            <Printer size={14} />
+          <button className="btn btn-sm btn-secondary" onClick={(e) => { e.stopPropagation(); fetchReceipt(r); }} title="View Receipt">
+            <Eye size={14} />
           </button>
-          <button className="btn btn-sm btn-success" onClick={(e) => { e.stopPropagation(); window.open(whatsappLink(r.customer?.mobile || '', `Dear ${r.customer?.name}, your payment of ₹${r.amount} has been received. Receipt: ${r.receipt?.receiptNo || r.collectionNo}`), '_blank'); }} title="Send via WhatsApp">
+          <button className="btn btn-sm btn-success" onClick={(e) => { e.stopPropagation(); handleWhatsAppReceipt(r); }} title="Send via WhatsApp">
             <MessageCircle size={14} />
           </button>
           <button className="btn btn-sm btn-danger" onClick={(e) => { e.stopPropagation(); handleVoid(r.id); }} title="Void Collection">
@@ -187,9 +212,27 @@ export default function CollectionPage() {
           </div>
 
           <div className="card">
-            <div className="card-header"><h3 className="card-title">Record Payment</h3></div>
+            <div className="card-header"><h3 className="card-title">
+              {viewReceipt && lastReceipt ? 'Receipt Generated' : 'Record Payment'}
+            </h3></div>
             <div className="card-body">
-              {!selectedCustomer ? (
+              {viewReceipt && lastReceipt ? (
+                <div>
+                  <div style={{ textAlign: 'center', padding: '16px', background: 'var(--bg-secondary)', borderRadius: 'var(--radius)', marginBottom: '16px' }}>
+                    <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Receipt #{lastReceipt.receiptNo}</div>
+                    <div style={{ fontSize: '28px', fontWeight: 700, color: 'var(--success)', margin: '8px 0' }}>₹{lastReceipt.amount.toLocaleString()}</div>
+                    <div style={{ fontSize: '13px' }}>{lastReceipt.customerName}</div>
+                  </div>
+                  <div className="flex gap-2" style={{ justifyContent: 'center' }}>
+                    <button className="btn btn-primary" onClick={() => handlePrintReceipt()}>
+                      <Printer size={16} /> Print Receipt
+                    </button>
+                    <button className="btn btn-secondary" onClick={() => { setViewReceipt(null); setLastReceipt(null); }}>
+                      Record Another
+                    </button>
+                  </div>
+                </div>
+              ) : !selectedCustomer ? (
                 <div className="empty-state"><IndianRupee size={48} /><p>Select a customer to record collection</p></div>
               ) : !loan ? (
                 <div className="empty-state"><p>No active loan found for this customer</p></div>
@@ -229,6 +272,25 @@ export default function CollectionPage() {
           <DataTable columns={columns} data={recent} />
         </div>
       )}
+
+      <Modal open={!!viewReceipt && !lastReceipt} onClose={() => setViewReceipt(null)} title="Receipt">
+        {viewReceipt && !lastReceipt && (
+          <div>
+            <div style={{ textAlign: 'center', padding: '16px', background: 'var(--bg-secondary)', borderRadius: 'var(--radius)', marginBottom: '16px' }}>
+              <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Receipt #{viewReceipt.receiptNo}</div>
+              <div style={{ fontSize: '24px', fontWeight: 700, margin: '8px 0' }}>₹{viewReceipt.amount.toLocaleString()}</div>
+              <div style={{ fontSize: '13px' }}>{viewReceipt.customerName}</div>
+              <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Balance: ₹{viewReceipt.balanceAfter.toLocaleString()}</div>
+            </div>
+            <div className="flex gap-2" style={{ justifyContent: 'center' }}>
+              <button className="btn btn-primary" onClick={() => handlePrintReceipt()}>
+                <Printer size={16} /> Print
+              </button>
+              <button className="btn btn-secondary" onClick={() => setViewReceipt(null)}>Close</button>
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }
