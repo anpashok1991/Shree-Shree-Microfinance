@@ -40,9 +40,9 @@ export class SettingsController {
     }
   };
 
-  resetAllData = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  resetAllData = async (_req: AuthRequest, res: Response, next: NextFunction) => {
     try {
-      const result = await this.settingsService.resetAllData(req.user!.userId);
+      const result = await this.settingsService.resetAllData();
       res.json({ success: true, message: result.message });
     } catch (error) {
       next(error);

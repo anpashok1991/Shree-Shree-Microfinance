@@ -1,6 +1,8 @@
+import bcrypt from 'bcryptjs';
 import { SettingsRepository } from '../repositories/SettingsRepository';
 import { NotFoundError } from '../utils/errors';
 import { prisma } from '../config/prisma';
+import { config } from '../config';
 
 export class SettingsService {
   private settingsRepo: SettingsRepository;
@@ -52,8 +54,8 @@ export class SettingsService {
     }
   }
 
-  async resetAllData(userId: string) {
-    // Delete in FK-safe order — child tables first
+  async resetAllData() {
+    // Wipe ALL data in FK-safe order
     await prisma.$transaction([
       prisma.receipt.deleteMany(),
       prisma.collection.deleteMany(),
@@ -64,8 +66,30 @@ export class SettingsService {
       prisma.customer.deleteMany(),
       prisma.enquiry.deleteMany(),
       prisma.userArea.deleteMany(),
+      prisma.systemSetting.deleteMany(),
+      prisma.area.deleteMany(),
+      prisma.user.deleteMany(),
     ]);
-    // Keep: User, Area, SystemSetting
-    return { message: 'All business data has been erased successfully' };
+
+    // Re-create SUPER_ADMIN
+    const hashedPassword = await bcrypt.hash(config.admin.password, 12);
+    await prisma.user.create({
+      data: {
+        email: config.admin.email,
+        password: hashedPassword,
+        name: 'Super Admin',
+        phone: config.admin.phone,
+        role: 'SUPER_ADMIN',
+        status: 'ACTIVE',
+      },
+    });
+
+    // Re-create default settings
+    const defaults = await this.getDefaultSettings();
+    for (const [key, value] of Object.entries(defaults)) {
+      await prisma.systemSetting.create({ data: { key, value } });
+    }
+
+    return { message: 'All data has been erased and system reset to factory defaults' };
   }
 }

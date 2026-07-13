@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { settingsApi, uploadApi, resolveUrl } from '../../services/api';
+import { settingsApi, uploadApi, API_BASE } from '../../services/api';
 
 const settingFields = [
   { key: 'company_name', label: 'Company Name', type: 'text' },
@@ -28,6 +28,10 @@ export default function SettingsPage() {
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoUploading, setLogoUploading] = useState(false);
   const [logoPreview, setLogoPreview] = useState('');
+  const [logoBuster, setLogoBuster] = useState(Date.now());
+  const [logoError, setLogoError] = useState(true);
+  useEffect(() => { setLogoError(!settings.company_logo); }, [settings.company_logo]);
+  const logoUrl = `${API_BASE}/public/logo?t=${logoBuster}`;
 
   useEffect(() => {
     settingsApi.getAll()
@@ -54,11 +58,12 @@ export default function SettingsPage() {
     try {
       const formData = new FormData();
       formData.append('logo', logoFile);
-      const res = await uploadApi.logo(formData);
-      setLogoPreview(res.data.url);
-      setSettings(p => ({ ...p, company_logo: res.data.url }));
-      setMessage('Logo uploaded successfully');
+      await uploadApi.logo(formData);
+      setLogoPreview('');
       setLogoFile(null);
+      setLogoBuster(Date.now());
+      setLogoError(false);
+      setMessage('Logo uploaded successfully');
     } catch (err: any) {
       setMessage(err.response?.data?.message || 'Logo upload failed');
     } finally { setLogoUploading(false); }
@@ -67,9 +72,10 @@ export default function SettingsPage() {
   const handleRemoveLogo = async () => {
     try {
       await settingsApi.update('company_logo', '');
-      setSettings(p => ({ ...p, company_logo: '' }));
       setLogoPreview('');
       setLogoFile(null);
+      setLogoBuster(Date.now());
+      setLogoError(true);
       setMessage('Logo removed');
     } catch (err: any) {
       setMessage(err.response?.data?.message || 'Failed');
@@ -106,9 +112,11 @@ export default function SettingsPage() {
         <div className="card-body">
           <div style={{ display: 'flex', alignItems: 'center', gap: '20px', flexWrap: 'wrap' }}>
             <div style={{ width: '120px', height: '120px', borderRadius: 'var(--radius)', border: '2px dashed var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', background: 'var(--bg-secondary)' }}>
-              {logoPreview || settings.company_logo
-                ? <img src={logoPreview || resolveUrl(settings.company_logo)} alt="Logo" style={{ maxWidth: '100%', maxHeight: '100%' }} />
-                : <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>No Logo</span>}
+              {logoPreview
+                ? <img src={logoPreview} alt="Logo" style={{ maxWidth: '100%', maxHeight: '100%' }} />
+                : logoError
+                  ? <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>No Logo</span>
+                  : <img src={logoUrl} alt="Logo" style={{ maxWidth: '100%', maxHeight: '100%' }} onError={() => setLogoError(true)} />}
             </div>
             <div>
               <input type="file" accept="image/*" onChange={e => {
@@ -119,7 +127,7 @@ export default function SettingsPage() {
                 <button className="btn btn-primary btn-sm" onClick={handleLogoUpload} disabled={!logoFile || logoUploading}>
                   {logoUploading ? 'Uploading...' : 'Upload Logo'}
                 </button>
-                {(settings.company_logo || logoPreview) && (
+                {(!logoError || logoPreview) && (
                   <button className="btn btn-danger btn-sm" onClick={handleRemoveLogo}>Remove Logo</button>
                 )}
               </div>
@@ -167,8 +175,7 @@ export default function SettingsPage() {
           {resetStep === 0 && (
             <div>
               <p style={{ color: 'var(--text-secondary)', marginBottom: '12px' }}>
-                This will permanently delete all customers, loans, collections, receipts, expenses, enquiries and audit logs.
-                System settings, user accounts and areas will be preserved. This action cannot be undone.
+                THIS WILL PERMANENTLY DELETE ALL DATA — customers, loans, collections, receipts, expenses, enquiries, users, areas, and settings. The system will be reset to factory defaults with only a fresh Super Admin account. This cannot be undone.
               </p>
               <button className="btn btn-danger" onClick={() => setResetStep(1)}>Reset All Data</button>
             </div>
