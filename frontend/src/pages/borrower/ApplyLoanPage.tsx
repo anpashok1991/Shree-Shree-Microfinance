@@ -102,7 +102,7 @@ export default function ApplyLoanPage() {
       {err && <div className="alert alert-danger">{err}</div>}
       {success && <div className="alert alert-success">{success}</div>}
 
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} noValidate>
         <div className="card mb-4">
           <div className="card-header"><h3 className="card-title">Loan Details</h3></div>
           <div className="card-body">
@@ -136,19 +136,19 @@ export default function ApplyLoanPage() {
           <div className="card-body">
             <div className="form-group">
               <label className="form-label">Aadhaar Card *</label>
-              <input className="form-input" type="file" accept="image/*,.pdf" required
+              <input className="form-input" type="file" accept="image/*,.pdf"
                 onChange={e => setFiles({ ...files, aadhaar: e.target.files?.[0] })} />
               {files.aadhaar && <small style={{ color: 'var(--success)' }}>Selected: {files.aadhaar.name}</small>}
             </div>
             <div className="form-group">
               <label className="form-label">PAN Card *</label>
-              <input className="form-input" type="file" accept="image/*,.pdf" required
+              <input className="form-input" type="file" accept="image/*,.pdf"
                 onChange={e => setFiles({ ...files, pan: e.target.files?.[0] })} />
               {files.pan && <small style={{ color: 'var(--success)' }}>Selected: {files.pan.name}</small>}
             </div>
             <div className="form-group">
               <label className="form-label">Photo *</label>
-              <input className="form-input" type="file" accept="image/*" required
+              <input className="form-input" type="file" accept="image/*"
                 onChange={e => setFiles({ ...files, photo: e.target.files?.[0] })} />
               {files.photo && <small style={{ color: 'var(--success)' }}>Selected: {files.photo.name}</small>}
             </div>
@@ -157,7 +157,7 @@ export default function ApplyLoanPage() {
 
         <TermsDialog onAccept={() => setTermsAccepted(true)} />
 
-        <button className="btn btn-primary" type="submit" disabled={loading || !termsAccepted} style={{ width: '200px' }}>
+        <button className="btn btn-primary" type="submit" disabled={loading} style={{ width: '200px' }}>
           {loading ? 'Submitting...' : 'Submit Application'}
         </button>
       </form>

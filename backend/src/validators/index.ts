@@ -84,11 +84,11 @@ export const approveLoanSchema = z.object({
 });
 
 export const rejectLoanSchema = z.object({
-  reason: z.string().min(5, 'Reason must be at least 5 characters'),
+  reason: z.string().min(1, 'Reason is required'),
 });
 
 export const returnLoanSchema = z.object({
-  reason: z.string().min(5, 'Reason must be at least 5 characters'),
+  reason: z.string().min(1, 'Reason is required'),
 });
 
 export const updateLoanSchema = z.object({
