@@ -90,6 +90,15 @@ export class LoanController {
     }
   };
 
+  forecloseLoan = async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+      const result = await this.loanService.forecloseLoan(req.params.id as string, req.user!.userId);
+      res.json({ success: true, message: 'Loan foreclosed successfully', data: result });
+    } catch (error) {
+      next(error);
+    }
+  };
+
   renewLoan = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const loan = await this.loanService.renewLoan(req.params.id as string, req.user!.userId);

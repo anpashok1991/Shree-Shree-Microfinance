@@ -1,8 +1,8 @@
 import bcrypt from 'bcryptjs';
 import { UserRepository } from '../repositories/UserRepository';
 import { AuditRepository } from '../repositories/AuditRepository';
-import { NotFoundError, ConflictError } from '../utils/errors';
-
+import { NotFoundError, ConflictError, AppError } from '../utils/errors';
+import { prisma } from '../config/prisma';
 import { getPaginationParams } from '../utils/helpers';
 
 export class UserService {
@@ -89,6 +89,25 @@ export class UserService {
   async deleteUser(id: string, deletedById: string) {
     const user = await this.userRepo.findById(id);
     if (!user) throw new NotFoundError('User not found');
+
+    // Check if user has active loans (as collector, creator, or assigned staff)
+    const activeLoans = await prisma.loan.findFirst({
+      where: {
+        status: 'ACTIVE',
+        isDeleted: false,
+        OR: [
+          { createdById: id },
+          { customer: { assignedStaffId: id } },
+          { collections: { some: { collectedById: id, isDeleted: false } } },
+        ],
+      },
+    });
+    if (activeLoans) {
+      throw new AppError(
+        'Cannot delete user: this user has active running loans. Close or transfer all associated loans first.',
+        400
+      );
+    }
 
     await this.userRepo.softDelete(id, deletedById);
 

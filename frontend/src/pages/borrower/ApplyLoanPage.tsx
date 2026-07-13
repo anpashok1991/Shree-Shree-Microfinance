@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { borrowerApi, uploadApi } from '../../services/api';
 import { Calculator } from 'lucide-react';
+import TermsDialog from './TermsDialog';
 
 export default function ApplyLoanPage() {
   const navigate = useNavigate();
@@ -19,6 +20,7 @@ export default function ApplyLoanPage() {
   const [err, setErr] = useState('');
   const [success, setSuccess] = useState('');
   const [files, setFiles] = useState<{ aadhaar?: File; pan?: File; photo?: File }>({});
+  const [termsAccepted, setTermsAccepted] = useState(false);
 
   useEffect(() => {
     borrowerApi.getProfile()
@@ -68,6 +70,7 @@ export default function ApplyLoanPage() {
     if (!files.aadhaar) { setErr('Please upload your Aadhaar card'); return; }
     if (!files.pan) { setErr('Please upload your PAN card'); return; }
     if (!files.photo) { setErr('Please upload your photo'); return; }
+    if (!termsAccepted) { setErr('Please accept the Terms & Conditions'); return; }
     setLoading(true);
     try {
       const res = await borrowerApi.applyLoan({ amount: amt });
@@ -151,7 +154,9 @@ export default function ApplyLoanPage() {
           </div>
         </div>
 
-        <button className="btn btn-primary" type="submit" disabled={loading} style={{ width: '200px' }}>
+        <TermsDialog onAccept={() => setTermsAccepted(true)} />
+
+        <button className="btn btn-primary" type="submit" disabled={loading || !termsAccepted} style={{ width: '200px' }}>
           {loading ? 'Submitting...' : 'Submit Application'}
         </button>
       </form>

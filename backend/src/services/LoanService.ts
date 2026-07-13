@@ -185,6 +185,35 @@ export class LoanService {
     return loan;
   }
 
+  async forecloseLoan(loanId: string, foreclosedById: string) {
+    const loan = await this.loanRepo.findById(loanId);
+    if (!loan) throw new NotFoundError('Loan not found');
+    if (loan.status !== 'ACTIVE') throw new AppError('Only active loans can be foreclosed', 400);
+    if (loan.outstanding <= 0) throw new AppError('Loan has no outstanding balance', 400);
+
+    const foreclosureChargePercent = await this.settingsRepo.getNumberValue('foreclosure_charge_percent', 0);
+    const charge = (loan.outstanding * foreclosureChargePercent) / 100;
+    const totalPayment = loan.outstanding + charge;
+
+    const updated = await this.loanRepo.update(loanId, {
+      status: 'CLOSED',
+      outstanding: 0,
+      totalPaid: loan.totalPaid + loan.outstanding,
+      closedAt: new Date(),
+    });
+
+    await this.auditRepo.create({
+      userId: foreclosedById,
+      action: 'FORECLOSE',
+      entity: 'Loan',
+      entityId: loanId,
+      oldValue: JSON.stringify({ outstanding: loan.outstanding, status: loan.status }),
+      newValue: JSON.stringify({ outstanding: 0, status: 'CLOSED', charge, totalPayment }),
+    });
+
+    return { ...updated, foreclosureCharge: charge, totalPayment };
+  }
+
   async renewLoan(loanId: string, renewedById: string) {
     const loan = await this.loanRepo.findById(loanId);
     if (!loan) throw new NotFoundError('Loan not found');

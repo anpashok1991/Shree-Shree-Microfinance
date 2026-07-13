@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { loanApi } from '../../services/api';
 import Loading from '../../components/common/Loading';
 import Modal from '../../components/common/Modal';
-import { ArrowLeft, CheckCircle, XCircle, RotateCcw, Edit, Save, X } from 'lucide-react';
+import { ArrowLeft, CheckCircle, XCircle, RotateCcw, Edit, Save, X, Ban } from 'lucide-react';
 
 export default function LoanDetailPage() {
   const { id } = useParams();
@@ -15,6 +15,8 @@ export default function LoanDetailPage() {
   const [actionLoading, setActionLoading] = useState(false);
   const [editing, setEditing] = useState(false);
   const [editAmount, setEditAmount] = useState(0);
+  const [showForeclose, setShowForeclose] = useState(false);
+  const [forecloseData, setForecloseData] = useState<any>(null);
 
   const fetch = () => {
     setLoading(true);
@@ -47,6 +49,28 @@ export default function LoanDetailPage() {
     try { await loanApi.renew(id!); fetch(); }
     catch (err: any) { alert(err.response?.data?.message || 'Failed'); }
     finally { setActionLoading(false); }
+  };
+
+  const handleForeclose = async () => {
+    setActionLoading(true);
+    try {
+      await loanApi.foreclose(id!);
+      setShowForeclose(false);
+      fetch();
+    } catch (err: any) { alert(err.response?.data?.message || 'Failed'); }
+    finally { setActionLoading(false); }
+  };
+
+  const openForeclose = async () => {
+    try {
+      const res = await loanApi.getById(id!);
+      const l = res.data;
+      const chargePercent = parseFloat(l.foreclosureChargePercent) || 0;
+      const outstanding = l.outstanding || 0;
+      const charge = (outstanding * chargePercent) / 100;
+      setForecloseData({ outstanding, chargePercent, charge, total: outstanding + charge });
+      setShowForeclose(true);
+    } catch { alert('Could not load loan data'); }
   };
 
   const handleSaveEdit = async () => {
@@ -136,12 +160,15 @@ export default function LoanDetailPage() {
       )}
 
       {loan.status === 'ACTIVE' && loan.outstanding > 0 && (
-        <div className="flex gap-2 mb-4">
-          <button className="btn btn-warning" onClick={handleRenew} disabled={actionLoading}>
-            <RotateCcw size={18} /> Renew Loan (20% Charge)
+        <div className="flex gap-2 mb-4" style={{ flexWrap: 'wrap' }}>
+          <button className="btn btn-warning" onClick={handleRenew} disabled={actionLoading} title="Renew the loan with a renewal charge">
+            <RotateCcw size={18} /> Renew Loan
           </button>
-          <button className="btn btn-success" onClick={() => navigate(`/collections?loanId=${loan.id}&customerId=${loan.customerId}`)}>
+          <button className="btn btn-success" onClick={() => navigate(`/collections?loanId=${loan.id}&customerId=${loan.customerId}`)} title="Record a new collection payment">
             Record Collection
+          </button>
+          <button className="btn btn-secondary" onClick={openForeclose} title="Close the loan early with a foreclosure charge (if any)">
+            <Ban size={18} /> Foreclose Loan
           </button>
         </div>
       )}
@@ -189,6 +216,27 @@ export default function LoanDetailPage() {
           </button>
           <button className="btn btn-secondary" onClick={() => setShowReject(false)}>Cancel</button>
         </div>
+      </Modal>
+
+      <Modal open={showForeclose} onClose={() => setShowForeclose(false)} title="Foreclose Loan">
+        {forecloseData && (
+          <div>
+            <p style={{ marginBottom: '16px', color: 'var(--text-secondary)' }}>
+              This will close the loan early. The borrower must pay the outstanding amount plus any applicable foreclosure charge.
+            </p>
+            <div style={{ background: 'var(--bg-secondary)', borderRadius: 'var(--radius)', padding: '16px', marginBottom: '16px' }}>
+              <Row label="Outstanding Amount" value={`₹${forecloseData.outstanding.toLocaleString()}`} />
+              <Row label={`Foreclosure Charge (${forecloseData.chargePercent}%)`} value={`₹${forecloseData.charge.toLocaleString()}`} />
+              <Row label="Total Payment Required" value={`₹${forecloseData.total.toLocaleString()}`} bold />
+            </div>
+            <div className="flex gap-2">
+              <button className="btn btn-primary" onClick={handleForeclose} disabled={actionLoading}>
+                {actionLoading ? 'Processing...' : 'Confirm Foreclosure'}
+              </button>
+              <button className="btn btn-secondary" onClick={() => setShowForeclose(false)}>Cancel</button>
+            </div>
+          </div>
+        )}
       </Modal>
     </div>
   );

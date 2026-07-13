@@ -34,6 +34,7 @@ export async function seedAdmin() {
       { key: 'company_email', value: config.admin.email },
       { key: 'file_charge_percent', value: '3' },
       { key: 'renewal_charge_percent', value: '20' },
+      { key: 'foreclosure_charge_percent', value: '0' },
       { key: 'max_loan', value: '50000' },
       { key: 'min_loan', value: '5000' },
       { key: 'loan_tenure_days', value: '100' },

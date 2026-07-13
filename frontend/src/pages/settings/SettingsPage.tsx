@@ -12,6 +12,7 @@ const settingFields = [
   { key: 'contact_phone', label: 'Contact Phone', type: 'text' },
   { key: 'file_charge_percent', label: 'File Charge (%)', type: 'number' },
   { key: 'renewal_charge_percent', label: 'Renewal Charge (%)', type: 'number' },
+  { key: 'foreclosure_charge_percent', label: 'Foreclosure Charge (%)', type: 'number' },
   { key: 'max_loan', label: 'Maximum Loan (₹)', type: 'number' },
   { key: 'min_loan', label: 'Minimum Loan (₹)', type: 'number' },
   { key: 'loan_tenure_days', label: 'Loan Tenure (Days)', type: 'number' },

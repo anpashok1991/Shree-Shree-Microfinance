@@ -35,6 +35,7 @@ export class SettingsService {
       company_email: '',
       file_charge_percent: '3',
       renewal_charge_percent: '20',
+      foreclosure_charge_percent: '0',
       max_loan: '50000',
       min_loan: '5000',
       loan_tenure_days: '100',

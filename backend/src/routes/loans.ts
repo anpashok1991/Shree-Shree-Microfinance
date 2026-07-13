@@ -20,5 +20,6 @@ router.put('/:id/reject', authorize('SUPER_ADMIN', 'ADMIN', 'MANAGER'), validate
 router.put('/:id/return', authorize('SUPER_ADMIN', 'ADMIN', 'MANAGER'), validate(returnLoanSchema), controller.returnLoan);
 router.put('/:id', authorize('SUPER_ADMIN', 'ADMIN', 'MANAGER'), validate(updateLoanSchema), controller.updateLoan);
 router.post('/:id/renew', authorize('SUPER_ADMIN', 'ADMIN'), controller.renewLoan);
+router.post('/:id/foreclose', authorize('SUPER_ADMIN', 'ADMIN'), controller.forecloseLoan);
 
 export default router;

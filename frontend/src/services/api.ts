@@ -82,6 +82,7 @@ export const loanApi = {
   return: (id: string, reason: string) =>
     api.put(`/loans/${id}/return`, { reason }).then((r) => r.data),
   renew: (id: string) => api.post(`/loans/${id}/renew`).then((r) => r.data),
+  foreclose: (id: string) => api.post(`/loans/${id}/foreclose`).then((r) => r.data),
   update: (id: string, data: any) => api.put(`/loans/${id}`, data).then((r) => r.data),
   calculate: (amount: number) =>
     api.get('/loans/calculate', { params: { amount } }).then((r) => r.data),
