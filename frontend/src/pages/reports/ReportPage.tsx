@@ -34,6 +34,28 @@ function getFieldValue(row: any, key: string): string {
   return String(row[key] ?? '');
 }
 
+const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+function exportCSV(data: any[], fieldKeys: string[], fields: Record<string, string>, filename: string) {
+  const headers = fieldKeys.map(k => fields[k] || k);
+  const csv = [headers.join(',')];
+  for (const row of data) {
+    const vals = fieldKeys.map(k => {
+      const v = getFieldValue(row, k);
+      const s = String(v).replace(/"/g, '""');
+      return `"${s}"`;
+    });
+    csv.push(vals.join(','));
+  }
+  const blob = new Blob(['\uFEFF' + csv.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${filename}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 export default function ReportPage() {
   const [type, setType] = useState('daily');
   const [data, setData] = useState<any[]>([]);
@@ -74,6 +96,9 @@ export default function ReportPage() {
   const fields = reportFields[type] || {};
   const fieldKeys = Object.keys(fields);
 
+  const typeLabel = reportTypes.find(r => r.key === type)?.label || type;
+  const dateLabel = type === 'daily' ? date : `${monthNames[parseInt(month) - 1]}-${year}`;
+
   return (
     <div>
       <h1 className="header-title mb-4">Reports</h1>
@@ -86,12 +111,12 @@ export default function ReportPage() {
                 {r.label}
               </button>
             ))}
-            <div className="ml-auto flex gap-2 items-center">
+            <div className="ml-auto flex gap-2 items-center flex-wrap">
               {type === 'daily' && <input className="form-input" type="date" value={date} onChange={(e) => setDate(e.target.value)} style={{ width: '160px' }} />}
               {(type === 'monthly' || type === 'profit') && (
                 <>
                   <select className="form-select" value={month} onChange={(e) => setMonth(e.target.value)} style={{ width: '100px' }}>
-                    {Array.from({ length: 12 }, (_, i) => <option key={i + 1} value={i + 1}>{new Date(0, i).toLocaleString('default', { month: 'short' })}</option>)}
+                    {Array.from({ length: 12 }, (_, i) => <option key={i + 1} value={i + 1}>{monthNames[i]}</option>)}
                   </select>
                   <input className="form-input" type="number" value={year} onChange={(e) => setYear(e.target.value)} style={{ width: '80px' }} />
                 </>
@@ -103,6 +128,14 @@ export default function ReportPage() {
       </div>
 
       <div className="card">
+        {!loading && data.length > 0 && (
+          <div className="card-header">
+            <h3 className="card-title">{typeLabel} Report</h3>
+            <button className="btn btn-secondary btn-sm" onClick={() => exportCSV(data, fieldKeys, fields, `${typeLabel}-${dateLabel}`)}>
+              Export Excel
+            </button>
+          </div>
+        )}
         {loading ? <Loading /> : data.length === 0 ? (
           <div className="empty-state">Select a report type and click Generate</div>
         ) : (

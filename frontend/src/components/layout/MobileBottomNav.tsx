@@ -1,5 +1,6 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Users, Wallet, Banknote } from 'lucide-react';
+import { LayoutDashboard, Users, Wallet, Banknote, LogOut } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 
 const items = [
   { to: '/dashboard', label: 'Home', icon: LayoutDashboard },
@@ -9,6 +10,8 @@ const items = [
 ];
 
 export default function MobileBottomNav() {
+  const { logout } = useAuth();
+
   return (
     <nav className="mobile-bottom-nav">
       <div className="mobile-bottom-nav-inner">
@@ -22,6 +25,10 @@ export default function MobileBottomNav() {
             <span>{item.label}</span>
           </NavLink>
         ))}
+        <button className="mobile-nav-item mobile-nav-logout" onClick={logout}>
+          <LogOut />
+          <span>Logout</span>
+        </button>
       </div>
     </nav>
   );

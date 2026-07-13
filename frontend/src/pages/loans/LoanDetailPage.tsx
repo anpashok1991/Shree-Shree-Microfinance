@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { loanApi, publicApi, API_BASE } from '../../services/api';
 import Loading from '../../components/common/Loading';
 import Modal from '../../components/common/Modal';
-import { ArrowLeft, CheckCircle, XCircle, RotateCcw, Edit, Save, X, Ban, FileText } from 'lucide-react';
+import { ArrowLeft, CheckCircle, XCircle, RotateCcw, Edit, Save, X, Ban, FileText, Download } from 'lucide-react';
 
 export default function LoanDetailPage() {
   const { id } = useParams();
@@ -139,6 +139,56 @@ export default function LoanDetailPage() {
     finally { setActionLoading(false); }
   };
 
+  const handleDownloadStatement = () => {
+    if (!loan) return;
+    const companyName = 'Shree Shree Group';
+    const win = window.open('', '_blank');
+    if (!win) return;
+    const rows = (loan.collections || []).map((c: any) => `
+      <tr>
+        <td>${new Date(c.collectionDate).toLocaleDateString()}</td>
+        <td>${c.receipt?.receiptNo || '-'}</td>
+        <td style="text-align:right">₹${c.amount.toLocaleString()}</td>
+        <td>${c.collectedBy?.name || '-'}</td>
+        <td style="text-align:right">₹${c.balanceAfter?.toLocaleString() || '-'}</td>
+      </tr>
+    `).join('');
+    const totalPaid = (loan.collections || []).reduce((s: number, c: any) => s + (c.amount || 0), 0);
+    win.document.write(`
+      <html><head><title>Statement - ${loan.loanNumber}</title>
+      <style>
+        body { font-family: Arial, sans-serif; padding: 30px; max-width: 800px; margin: auto; }
+        h2 { text-align: center; margin-bottom: 4px; }
+        .info { margin: 20px 0; }
+        .info td { padding: 4px 8px; font-size: 13px; }
+        table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+        th, td { padding: 8px 10px; border: 1px solid #ccc; font-size: 13px; }
+        th { background: #f5f5f5; text-align: left; }
+        .total-row { font-weight: bold; background: #f9f9f9; }
+        .footer { text-align: center; margin-top: 30px; font-size: 12px; color: #666; }
+        @media print { .no-print { display: none; } }
+      </style></head><body>
+        <h2>${companyName}</h2>
+        <p style="text-align:center;margin-bottom:20px">Loan Payment Statement</p>
+        <table class="info">
+          <tr><td><b>Customer:</b></td><td>${loan.customer?.name || ''}</td><td><b>Loan #:</b></td><td>${loan.loanNumber}</td></tr>
+          <tr><td><b>Amount:</b></td><td>₹${loan.amount.toLocaleString()}</td><td><b>Status:</b></td><td>${loan.status}</td></tr>
+        </table>
+        <table>
+          <thead><tr><th>Date</th><th>Receipt</th><th style="text-align:right">Amount</th><th>Collected By</th><th style="text-align:right">Balance</th></tr></thead>
+          <tbody>${rows}</tbody>
+          <tfoot><tr class="total-row"><td colspan="2">Total Paid</td><td style="text-align:right">₹${totalPaid.toLocaleString()}</td><td colspan="2"></td></tr></tfoot>
+        </table>
+        <div class="footer">Generated on ${new Date().toLocaleString()}</div>
+        <div class="no-print" style="text-align:center;margin-top:20px">
+          <button onclick="window.print()" style="padding:8px 24px;cursor:pointer">Print / Save as PDF</button>
+        </div>
+      </body></html>
+    `);
+    win.document.close();
+    win.print();
+  };
+
   if (loading) return <Loading />;
   if (!loan) return <div className="empty-state">Loan not found</div>;
 
@@ -214,24 +264,28 @@ export default function LoanDetailPage() {
         </div>
       )}
 
-      {loan.status === 'ACTIVE' && loan.outstanding > 0 && (
+      {(loan.status === 'ACTIVE' || loan.status === 'CLOSED') && (
         <div className="flex gap-2 mb-4" style={{ flexWrap: 'wrap' }}>
-          <button className="btn btn-warning" onClick={handleRenew} disabled={actionLoading} title="Renew the loan with a renewal charge">
-            <RotateCcw size={18} /> Renew Loan
-          </button>
-          <button className="btn btn-success" onClick={() => navigate(`/collections?loanId=${loan.id}&customerId=${loan.customerId}`)} title="Record a new collection payment">
-            Record Collection
-          </button>
-          <button className="btn btn-secondary" onClick={openForeclose} title="Close the loan early with a foreclosure charge (if any)">
-            <Ban size={18} /> Foreclose Loan
-          </button>
-        </div>
-      )}
-
-      {loan.status === 'CLOSED' && (
-        <div className="flex gap-2 mb-4">
-          <button className="btn btn-primary" onClick={handlePrintNoc} title="Download No Objection Certificate for this closed loan">
-            <FileText size={18} /> Download NOC
+          {loan.status === 'ACTIVE' && loan.outstanding > 0 && (
+            <>
+              <button className="btn btn-warning" onClick={handleRenew} disabled={actionLoading} title="Renew the loan with a renewal charge">
+                <RotateCcw size={18} /> Renew Loan
+              </button>
+              <button className="btn btn-success" onClick={() => navigate(`/collections?loanId=${loan.id}&customerId=${loan.customerId}`)} title="Record a new collection payment">
+                Record Collection
+              </button>
+              <button className="btn btn-secondary" onClick={openForeclose} title="Close the loan early with a foreclosure charge (if any)">
+                <Ban size={18} /> Foreclose Loan
+              </button>
+            </>
+          )}
+          {loan.status === 'CLOSED' && (
+            <button className="btn btn-primary" onClick={handlePrintNoc} title="Download No Objection Certificate for this closed loan">
+              <FileText size={18} /> Download NOC
+            </button>
+          )}
+          <button className="btn btn-secondary" onClick={handleDownloadStatement} title="Download payment statement">
+            <Download size={18} /> Statement
           </button>
         </div>
       )}

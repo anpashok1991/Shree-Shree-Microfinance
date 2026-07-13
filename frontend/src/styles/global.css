@@ -552,6 +552,7 @@ input, select, textarea, button { font-family: inherit; font-size: inherit; }
 
 .mobile-nav-item.active { color: var(--primary); }
 .mobile-nav-item svg { width: 24px; height: 24px; }
+.mobile-nav-logout { color: var(--danger); }
 
 /* Grid Layouts */
 .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
@@ -676,6 +677,14 @@ input, select, textarea, button { font-family: inherit; font-size: inherit; }
 
 .hamburger svg { width: 24px; height: 24px; }
 
+/* Sidebar Overlay */
+.sidebar-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 99;
+}
+
 /* Mobile responsive */
 @media (max-width: 768px) {
   .sidebar {
@@ -705,16 +714,36 @@ input, select, textarea, button { font-family: inherit; font-size: inherit; }
   .header { padding: 0 16px; }
   .header-title { font-size: 16px; }
 
-  .table th, .table td { padding: 8px 10px; font-size: 13px; }
+  .table th, .table td { padding: 8px 10px; font-size: 12px; white-space: nowrap; }
+
+  .card { border-radius: var(--radius); }
+  .card-header { padding: 12px 14px; }
+  .card-body { padding: 14px; }
 
   .modal { max-width: 100%; margin: 10px; }
 
   .login-card { padding: 24px; }
+
+  .table-actions { flex-wrap: nowrap; }
+  .table-actions .btn { padding: 4px 8px; font-size: 11px; }
+
+  .btn { font-size: 13px; padding: 8px 12px; }
+  .btn-lg { padding: 10px 18px; font-size: 14px; }
+
+  .form-input, .form-select, .form-textarea { font-size: 13px; padding: 8px 10px; }
+
+  .search-box input { width: 160px !important; }
+
+  .header-right { gap: 6px; }
+  .header-right span { font-size: 12px; }
 }
 
 @media (max-width: 480px) {
   .stats-grid { grid-template-columns: 1fr; }
   .page-content { padding: 12px; }
   .header { height: 56px; }
-  .card-body { padding: 16px; }
+  .card-body { padding: 12px; }
+  .header-title { font-size: 14px; }
+  .hamburger svg { width: 20px; height: 20px; }
+  .search-box input { width: 120px !important; font-size: 12px; }
 }
