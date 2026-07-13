@@ -19,6 +19,7 @@ const public_1 = __importDefault(require("./public"));
 const upload_1 = __importDefault(require("./upload"));
 const enquiries_1 = __importDefault(require("./enquiries"));
 const borrower_1 = __importDefault(require("./borrower"));
+const receipts_1 = __importDefault(require("./receipts"));
 const router = (0, express_1.Router)();
 router.use('/public', public_1.default);
 router.use('/auth', auth_1.default);
@@ -35,5 +36,6 @@ router.use('/expenses', expenses_1.default);
 router.use('/uploads', upload_1.default);
 router.use('/enquiries', enquiries_1.default);
 router.use('/borrower', borrower_1.default);
+router.use('/receipts', receipts_1.default);
 exports.default = router;
 //# sourceMappingURL=index.js.map

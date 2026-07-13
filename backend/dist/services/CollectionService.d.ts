@@ -11,6 +11,7 @@ export declare class CollectionService {
         amount: number;
         collectedById: string;
         remarks?: string;
+        collectionDate?: string;
     }): Promise<{
         id: string;
         status: string;
@@ -51,6 +52,7 @@ export declare class CollectionService {
             totalPages: number;
         };
     }>;
+    voidCollection(collectionId: string, voidedById: string): Promise<void>;
     getTodayStats(): Promise<{
         todayCollection: number;
         monthlyCollection: number;

@@ -33,6 +33,7 @@ class CollectionService {
             amount: data.amount,
             collectedById: data.collectedById,
             remarks: data.remarks,
+            ...(data.collectionDate ? { collectionDate: new Date(data.collectionDate) } : {}),
         });
         await this.loanRepo.update(data.loanId, {
             totalPaid: newTotalPaid,
@@ -99,6 +100,30 @@ class CollectionService {
             data,
             pagination: { page: p, limit: l, total, totalPages: Math.ceil(total / l) },
         };
+    }
+    async voidCollection(collectionId, voidedById) {
+        const collection = await this.collectionRepo.findById(collectionId, { loan: true });
+        if (!collection)
+            throw new errors_1.NotFoundError('Collection not found');
+        const loan = collection.loan;
+        const newTotalPaid = Math.max(0, loan.totalPaid - collection.amount);
+        const newOutstanding = loan.outstanding + collection.amount;
+        await this.collectionRepo.softDelete(collectionId, voidedById);
+        await this.loanRepo.update(loan.id, {
+            totalPaid: newTotalPaid,
+            outstanding: newOutstanding,
+            status: newOutstanding > 0 ? 'ACTIVE' : loan.status,
+        });
+        if (newOutstanding > 0) {
+            await this.customerRepo.update(collection.customerId, { status: 'ACTIVE' });
+        }
+        await this.auditRepo.create({
+            userId: voidedById,
+            action: 'VOID',
+            entity: 'Collection',
+            entityId: collectionId,
+            oldValue: `Amount: ${collection.amount}`,
+        });
     }
     async getTodayStats() {
         const [todayCollection, monthlyCollection] = await Promise.all([

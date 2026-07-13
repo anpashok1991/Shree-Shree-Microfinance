@@ -15,13 +15,13 @@ exports.createUserSchema = zod_1.z.object({
     password: zod_1.z.string().min(6, 'Password must be at least 6 characters'),
     name: zod_1.z.string().min(2, 'Name must be at least 2 characters'),
     phone: zod_1.z.string().min(10, 'Invalid phone number'),
-    role: zod_1.z.enum(['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STAFF', 'VIEWER']),
+    role: zod_1.z.enum(['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STAFF', 'VIEWER', 'BORROWER']),
     areaIds: zod_1.z.array(zod_1.z.string()).optional(),
 });
 exports.updateUserSchema = zod_1.z.object({
     name: zod_1.z.string().min(2).optional(),
     phone: zod_1.z.string().min(10).optional(),
-    role: zod_1.z.enum(['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STAFF', 'VIEWER']).optional(),
+    role: zod_1.z.enum(['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STAFF', 'VIEWER', 'BORROWER']).optional(),
     areaIds: zod_1.z.array(zod_1.z.string()).optional(),
 });
 exports.createAreaSchema = zod_1.z.object({

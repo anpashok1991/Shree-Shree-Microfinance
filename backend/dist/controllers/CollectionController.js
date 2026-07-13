@@ -30,6 +30,15 @@ class CollectionController {
                 next(error);
             }
         };
+        this.voidCollection = async (req, res, next) => {
+            try {
+                await this.collectionService.voidCollection(req.params.id, req.user.userId);
+                res.json({ success: true, message: 'Collection voided successfully' });
+            }
+            catch (error) {
+                next(error);
+            }
+        };
         this.getTodayStats = async (_req, res, next) => {
             try {
                 const stats = await this.collectionService.getTodayStats();

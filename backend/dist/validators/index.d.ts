@@ -24,37 +24,37 @@ export declare const createUserSchema: z.ZodObject<{
     password: z.ZodString;
     name: z.ZodString;
     phone: z.ZodString;
-    role: z.ZodEnum<["SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF", "VIEWER"]>;
+    role: z.ZodEnum<["SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF", "VIEWER", "BORROWER"]>;
     areaIds: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
 }, "strip", z.ZodTypeAny, {
     name: string;
     email: string;
     password: string;
     phone: string;
-    role: "STAFF" | "SUPER_ADMIN" | "ADMIN" | "MANAGER" | "VIEWER";
+    role: "BORROWER" | "STAFF" | "SUPER_ADMIN" | "ADMIN" | "MANAGER" | "VIEWER";
     areaIds?: string[] | undefined;
 }, {
     name: string;
     email: string;
     password: string;
     phone: string;
-    role: "STAFF" | "SUPER_ADMIN" | "ADMIN" | "MANAGER" | "VIEWER";
+    role: "BORROWER" | "STAFF" | "SUPER_ADMIN" | "ADMIN" | "MANAGER" | "VIEWER";
     areaIds?: string[] | undefined;
 }>;
 export declare const updateUserSchema: z.ZodObject<{
     name: z.ZodOptional<z.ZodString>;
     phone: z.ZodOptional<z.ZodString>;
-    role: z.ZodOptional<z.ZodEnum<["SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF", "VIEWER"]>>;
+    role: z.ZodOptional<z.ZodEnum<["SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF", "VIEWER", "BORROWER"]>>;
     areaIds: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
 }, "strip", z.ZodTypeAny, {
     name?: string | undefined;
     phone?: string | undefined;
-    role?: "STAFF" | "SUPER_ADMIN" | "ADMIN" | "MANAGER" | "VIEWER" | undefined;
+    role?: "BORROWER" | "STAFF" | "SUPER_ADMIN" | "ADMIN" | "MANAGER" | "VIEWER" | undefined;
     areaIds?: string[] | undefined;
 }, {
     name?: string | undefined;
     phone?: string | undefined;
-    role?: "STAFF" | "SUPER_ADMIN" | "ADMIN" | "MANAGER" | "VIEWER" | undefined;
+    role?: "BORROWER" | "STAFF" | "SUPER_ADMIN" | "ADMIN" | "MANAGER" | "VIEWER" | undefined;
     areaIds?: string[] | undefined;
 }>;
 export declare const createAreaSchema: z.ZodObject<{
