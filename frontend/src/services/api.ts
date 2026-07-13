@@ -129,6 +129,7 @@ export const settingsApi = {
   getByKey: (key: string) => api.get(`/settings/${key}`).then((r) => r.data),
   update: (key: string, value: string) =>
     api.put(`/settings/${key}`, { value }).then((r) => r.data),
+  resetAllData: () => api.post('/settings/reset-all-data').then((r) => r.data),
 };
 
 export const publicApi = {
@@ -169,7 +170,7 @@ export const expenseApi = {
 
 export function resolveUrl(path: string): string {
   if (!path) return '';
-  if (path.startsWith('http://') || path.startsWith('https://')) return path;
+  if (path.startsWith('http://') || path.startsWith('https://') || path.startsWith('data:')) return path;
   const base = API_BASE.replace('/api', '');
   return `${base}${path}`;
 }

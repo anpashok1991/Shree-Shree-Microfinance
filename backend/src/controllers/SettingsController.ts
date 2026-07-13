@@ -39,4 +39,13 @@ export class SettingsController {
       next(error);
     }
   };
+
+  resetAllData = async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+      const result = await this.settingsService.resetAllData(req.user!.userId);
+      res.json({ success: true, message: result.message });
+    } catch (error) {
+      next(error);
+    }
+  };
 }

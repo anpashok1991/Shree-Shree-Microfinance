@@ -1,5 +1,6 @@
 import { SettingsRepository } from '../repositories/SettingsRepository';
 import { NotFoundError } from '../utils/errors';
+import { prisma } from '../config/prisma';
 
 export class SettingsService {
   private settingsRepo: SettingsRepository;
@@ -49,5 +50,22 @@ export class SettingsService {
         await this.settingsRepo.create({ key, value });
       }
     }
+  }
+
+  async resetAllData(userId: string) {
+    // Delete in FK-safe order — child tables first
+    await prisma.$transaction([
+      prisma.receipt.deleteMany(),
+      prisma.collection.deleteMany(),
+      prisma.notification.deleteMany(),
+      prisma.auditLog.deleteMany(),
+      prisma.expense.deleteMany(),
+      prisma.loan.deleteMany(),
+      prisma.customer.deleteMany(),
+      prisma.enquiry.deleteMany(),
+      prisma.userArea.deleteMany(),
+    ]);
+    // Keep: User, Area, SystemSetting
+    return { message: 'All business data has been erased successfully' };
   }
 }

@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { AuthRequest } from '../types';
 import { SettingsRepository } from '../repositories/SettingsRepository';
 import { CustomerRepository } from '../repositories/CustomerRepository';
+import fs from 'fs';
 
 export class UploadController {
   private settingsRepo = new SettingsRepository();
@@ -10,10 +11,12 @@ export class UploadController {
   uploadLogo = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       if (!req.file) return res.status(400).json({ success: false, message: 'No file uploaded' });
-      const baseUrl = `${req.protocol}://${req.get('host')}`;
-      const url = `${baseUrl}/uploads/logo/${req.file.filename}`;
-      await this.settingsRepo.upsertValue('company_logo', url);
-      res.json({ success: true, message: 'Logo uploaded', data: { url } });
+      const fileBuffer = fs.readFileSync(req.file.path);
+      const base64 = fileBuffer.toString('base64');
+      const dataUrl = `data:${req.file.mimetype};base64,${base64}`;
+      await this.settingsRepo.upsertValue('company_logo', dataUrl);
+      fs.unlinkSync(req.file.path);
+      res.json({ success: true, message: 'Logo uploaded', data: { url: dataUrl } });
     } catch (error) {
       next(error);
     }

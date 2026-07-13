@@ -76,6 +76,23 @@ export default function SettingsPage() {
     }
   };
 
+  const [resetStep, setResetStep] = useState(0); // 0=hidden, 1=first confirm, 2=type RESET
+  const [resetConfirmText, setResetConfirmText] = useState('');
+  const [resetting, setResetting] = useState(false);
+
+  const handleResetAllData = async () => {
+    if (resetConfirmText !== 'RESET') return;
+    setResetting(true);
+    try {
+      await settingsApi.resetAllData();
+      setMessage('All business data has been erased successfully');
+      setResetStep(0);
+      setResetConfirmText('');
+    } catch (err: any) {
+      setMessage(err.response?.data?.message || 'Reset failed');
+    } finally { setResetting(false); }
+  };
+
   if (loading) return <div className="loading"><div className="spinner" /></div>;
 
   return (
@@ -111,7 +128,7 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      <div className="card">
+      <div className="card mb-4">
         <div className="card-body">
           <div style={{ display: 'grid', gap: '20px', maxWidth: '600px' }}>
             {settingFields.map((field) => (
@@ -141,6 +158,53 @@ export default function SettingsPage() {
               </div>
             ))}
           </div>
+        </div>
+      </div>
+
+      <div className="card" style={{ borderColor: '#dc3545' }}>
+        <div className="card-header"><h3 className="card-title" style={{ color: '#dc3545' }}>Danger Zone</h3></div>
+        <div className="card-body">
+          {resetStep === 0 && (
+            <div>
+              <p style={{ color: 'var(--text-secondary)', marginBottom: '12px' }}>
+                This will permanently delete all customers, loans, collections, receipts, expenses, enquiries and audit logs.
+                System settings, user accounts and areas will be preserved. This action cannot be undone.
+              </p>
+              <button className="btn btn-danger" onClick={() => setResetStep(1)}>Reset All Data</button>
+            </div>
+          )}
+          {resetStep === 1 && (
+            <div>
+              <p style={{ color: '#dc3545', fontWeight: 600, marginBottom: '12px' }}>
+                Are you absolutely sure? This will erase all business data permanently.
+              </p>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button className="btn btn-danger" onClick={() => setResetStep(2)}>Yes, I'm Sure</button>
+                <button className="btn btn-secondary" onClick={() => setResetStep(0)}>Cancel</button>
+              </div>
+            </div>
+          )}
+          {resetStep === 2 && (
+            <div>
+              <p style={{ color: '#dc3545', fontWeight: 600, marginBottom: '8px' }}>
+                Final confirmation — type <strong>RESET</strong> below to proceed:
+              </p>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <input
+                  className="form-input"
+                  type="text"
+                  value={resetConfirmText}
+                  onChange={(e) => setResetConfirmText(e.target.value)}
+                  placeholder="Type RESET"
+                  style={{ width: '160px' }}
+                />
+                <button className="btn btn-danger" disabled={resetConfirmText !== 'RESET' || resetting} onClick={handleResetAllData}>
+                  {resetting ? 'Erasing...' : 'Erase Everything'}
+                </button>
+                <button className="btn btn-secondary" onClick={() => { setResetStep(0); setResetConfirmText(''); }}>Cancel</button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
