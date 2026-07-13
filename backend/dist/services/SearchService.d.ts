@@ -14,8 +14,8 @@ export declare class SearchService {
             };
             id: string;
             status: string;
-            amount: number;
             loanNumber: string;
+            amount: number;
         }[];
         collections: {
             customer: {

@@ -29,6 +29,32 @@ class PublicController {
                 next(error);
             }
         };
+        this.getLogo = async (req, res, next) => {
+            try {
+                const value = await this.settingsRepo.getValue('company_logo');
+                if (!value)
+                    return res.status(404).json({ success: false, message: 'No logo' });
+                // Data URL — extract mime & base64, serve as image
+                if (value.startsWith('data:')) {
+                    const m = value.match(/^data:(.+?);base64,(.+)$/);
+                    if (m) {
+                        const mimeType = m[1];
+                        const data = Buffer.from(m[2], 'base64');
+                        res.setHeader('Content-Type', mimeType);
+                        res.setHeader('Cache-Control', 'public, max-age=86400');
+                        return res.send(data);
+                    }
+                }
+                // HTTP/HTTPS URL — redirect
+                if (value.startsWith('http://') || value.startsWith('https://')) {
+                    return res.redirect(value);
+                }
+                return res.status(404).json({ success: false, message: 'Invalid logo data' });
+            }
+            catch (error) {
+                next(error);
+            }
+        };
     }
 }
 exports.PublicController = PublicController;

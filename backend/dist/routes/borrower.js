@@ -9,5 +9,6 @@ router.use(auth_1.authenticate);
 router.use((0, auth_1.authorize)('BORROWER'));
 router.get('/profile', controller.getProfile);
 router.put('/profile', controller.saveProfile);
+router.get('/loans/:id', controller.getLoanDetail);
 exports.default = router;
 //# sourceMappingURL=borrower.js.map

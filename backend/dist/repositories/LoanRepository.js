@@ -57,7 +57,10 @@ class LoanRepository extends BaseRepository_1.BaseRepository {
                 collections: {
                     orderBy: { collectionDate: 'desc' },
                     where: { isDeleted: false },
-                    include: { collectedBy: { select: { id: true, name: true } } },
+                    include: {
+                        collectedBy: { select: { id: true, name: true } },
+                        receipt: true,
+                    },
                 },
                 renewedLoans: { where: { isDeleted: false } },
                 parentLoan: true,

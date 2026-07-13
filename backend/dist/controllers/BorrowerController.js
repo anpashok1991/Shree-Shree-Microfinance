@@ -22,6 +22,15 @@ class BorrowerController {
                 next(error);
             }
         };
+        this.getLoanDetail = async (req, res, next) => {
+            try {
+                const loan = await this.borrowerService.getLoanDetail(req.user.userId, req.params.id);
+                res.json({ success: true, data: loan });
+            }
+            catch (error) {
+                next(error);
+            }
+        };
         this.borrowerService = new BorrowerService_1.BorrowerService();
     }
 }

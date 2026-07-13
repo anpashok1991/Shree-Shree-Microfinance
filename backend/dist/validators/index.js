@@ -77,12 +77,10 @@ exports.approveLoanSchema = zod_1.z.object({
     loanId: zod_1.z.string(),
 });
 exports.rejectLoanSchema = zod_1.z.object({
-    loanId: zod_1.z.string(),
-    reason: zod_1.z.string().min(5),
+    reason: zod_1.z.string().min(5, 'Reason must be at least 5 characters'),
 });
 exports.returnLoanSchema = zod_1.z.object({
-    loanId: zod_1.z.string(),
-    reason: zod_1.z.string().min(5),
+    reason: zod_1.z.string().min(5, 'Reason must be at least 5 characters'),
 });
 exports.updateLoanSchema = zod_1.z.object({
     amount: zod_1.z.number().positive().optional(),

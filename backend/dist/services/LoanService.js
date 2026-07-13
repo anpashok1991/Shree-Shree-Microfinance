@@ -6,6 +6,7 @@ const CustomerRepository_1 = require("../repositories/CustomerRepository");
 const AuditRepository_1 = require("../repositories/AuditRepository");
 const SettingsRepository_1 = require("../repositories/SettingsRepository");
 const errors_1 = require("../utils/errors");
+const prisma_1 = require("../config/prisma");
 const helpers_1 = require("../utils/helpers");
 class LoanService {
     constructor() {
@@ -144,7 +145,35 @@ class LoanService {
         const loan = await this.loanRepo.getLoanHistory(loanId);
         if (!loan)
             throw new errors_1.NotFoundError('Loan not found');
-        return loan;
+        const foreclosureChargePercent = await this.settingsRepo.getNumberValue('foreclosure_charge_percent', 0);
+        return { ...loan, foreclosureChargePercent };
+    }
+    async forecloseLoan(loanId, foreclosedById) {
+        const loan = await this.loanRepo.findById(loanId);
+        if (!loan)
+            throw new errors_1.NotFoundError('Loan not found');
+        if (loan.status !== 'ACTIVE')
+            throw new errors_1.AppError('Only active loans can be foreclosed', 400);
+        if (loan.outstanding <= 0)
+            throw new errors_1.AppError('Loan has no outstanding balance', 400);
+        const foreclosureChargePercent = await this.settingsRepo.getNumberValue('foreclosure_charge_percent', 0);
+        const charge = (loan.outstanding * foreclosureChargePercent) / 100;
+        const totalPayment = loan.outstanding + charge;
+        const updated = await this.loanRepo.update(loanId, {
+            status: 'CLOSED',
+            outstanding: 0,
+            totalPaid: loan.totalPaid + loan.outstanding,
+            closedAt: new Date(),
+        });
+        await this.auditRepo.create({
+            userId: foreclosedById,
+            action: 'FORECLOSE',
+            entity: 'Loan',
+            entityId: loanId,
+            oldValue: JSON.stringify({ outstanding: loan.outstanding, status: loan.status }),
+            newValue: JSON.stringify({ outstanding: 0, status: 'CLOSED', charge, totalPayment }),
+        });
+        return { ...updated, foreclosureCharge: charge, totalPayment };
     }
     async renewLoan(loanId, renewedById) {
         const loan = await this.loanRepo.findById(loanId);
@@ -244,6 +273,20 @@ class LoanService {
     async findCustomerByUserId(userId) {
         return this.customerRepo.findByUserId(userId);
     }
+    async findCustomerByUserIdOrEmail(userId, email) {
+        let customer = await this.customerRepo.findByUserId(userId);
+        if (!customer) {
+            // fallback: try to find customer by matching email/name
+            const user = await prisma_1.prisma.user.findUnique({ where: { id: userId } });
+            if (user) {
+                customer = await this.customerRepo.findFirst({
+                    mobile: user.phone,
+                    isDeleted: false,
+                });
+            }
+        }
+        return customer;
+    }
     async calculateLoanAmount(amount) {
         const fileChargePercent = await this.settingsRepo.getNumberValue('file_charge_percent', 3);
         const tenure = await this.settingsRepo.getNumberValue('loan_tenure_days', 100);
@@ -266,6 +309,29 @@ class LoanService {
             },
             include: { customer: true },
         });
+    }
+    async generateNoc(loanId) {
+        const loan = await this.loanRepo.getLoanHistory(loanId);
+        if (!loan)
+            throw new errors_1.NotFoundError('Loan not found');
+        if (loan.status !== 'CLOSED')
+            throw new errors_1.AppError('NOC is only available for closed loans', 400);
+        const companyName = await this.settingsRepo.getValue('company_name', 'Shree Shree Group');
+        const companyAddress = await this.settingsRepo.getValue('company_address', '');
+        return {
+            companyName,
+            companyAddress,
+            nocNumber: `NOC-${loan.loanNumber}-${loan.closedAt ? new Date(loan.closedAt).toISOString().slice(0, 10).replace(/-/g, '') : Date.now()}`,
+            loanNumber: loan.loanNumber,
+            customerName: loan.customer?.name || '',
+            customerAddress: [loan.customer?.address, loan.customer?.village, loan.customer?.district, loan.customer?.state].filter(Boolean).join(', '),
+            loanAmount: loan.amount,
+            disbursedAmount: loan.disbursedAmount,
+            totalPaid: loan.totalPaid,
+            loanStartDate: loan.startDate,
+            loanClosedDate: loan.closedAt,
+            issuedDate: new Date(),
+        };
     }
 }
 exports.LoanService = LoanService;

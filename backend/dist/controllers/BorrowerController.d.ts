@@ -5,5 +5,6 @@ export declare class BorrowerController {
     constructor();
     getProfile: (req: AuthRequest, res: Response, next: NextFunction) => Promise<void>;
     saveProfile: (req: AuthRequest, res: Response, next: NextFunction) => Promise<void>;
+    getLoanDetail: (req: AuthRequest, res: Response, next: NextFunction) => Promise<void>;
 }
 //# sourceMappingURL=BorrowerController.d.ts.map

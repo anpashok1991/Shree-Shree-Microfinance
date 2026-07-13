@@ -204,23 +204,17 @@ export declare const approveLoanSchema: z.ZodObject<{
     loanId: string;
 }>;
 export declare const rejectLoanSchema: z.ZodObject<{
-    loanId: z.ZodString;
     reason: z.ZodString;
 }, "strip", z.ZodTypeAny, {
-    loanId: string;
     reason: string;
 }, {
-    loanId: string;
     reason: string;
 }>;
 export declare const returnLoanSchema: z.ZodObject<{
-    loanId: z.ZodString;
     reason: z.ZodString;
 }, "strip", z.ZodTypeAny, {
-    loanId: string;
     reason: string;
 }, {
-    loanId: string;
     reason: string;
 }>;
 export declare const updateLoanSchema: z.ZodObject<{

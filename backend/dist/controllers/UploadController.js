@@ -1,8 +1,12 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UploadController = void 0;
 const SettingsRepository_1 = require("../repositories/SettingsRepository");
 const CustomerRepository_1 = require("../repositories/CustomerRepository");
+const fs_1 = __importDefault(require("fs"));
 class UploadController {
     constructor() {
         this.settingsRepo = new SettingsRepository_1.SettingsRepository();
@@ -11,10 +15,12 @@ class UploadController {
             try {
                 if (!req.file)
                     return res.status(400).json({ success: false, message: 'No file uploaded' });
-                const baseUrl = `${req.protocol}://${req.get('host')}`;
-                const url = `${baseUrl}/uploads/logo/${req.file.filename}`;
-                await this.settingsRepo.upsertValue('company_logo', url);
-                res.json({ success: true, message: 'Logo uploaded', data: { url } });
+                const fileBuffer = fs_1.default.readFileSync(req.file.path);
+                const base64 = fileBuffer.toString('base64');
+                const dataUrl = `data:${req.file.mimetype};base64,${base64}`;
+                await this.settingsRepo.upsertValue('company_logo', dataUrl);
+                fs_1.default.unlinkSync(req.file.path);
+                res.json({ success: true, message: 'Logo uploaded', data: { url: dataUrl } });
             }
             catch (error) {
                 next(error);

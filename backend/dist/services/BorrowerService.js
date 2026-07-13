@@ -3,12 +3,14 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.BorrowerService = void 0;
 const CustomerRepository_1 = require("../repositories/CustomerRepository");
 const AreaRepository_1 = require("../repositories/AreaRepository");
+const LoanRepository_1 = require("../repositories/LoanRepository");
 const errors_1 = require("../utils/errors");
 const helpers_1 = require("../utils/helpers");
 class BorrowerService {
     constructor() {
         this.customerRepo = new CustomerRepository_1.CustomerRepository();
         this.areaRepo = new AreaRepository_1.AreaRepository();
+        this.loanRepo = new LoanRepository_1.LoanRepository();
     }
     async getProfile(userId) {
         const customer = await this.customerRepo.findByUserId(userId);
@@ -31,8 +33,8 @@ class BorrowerService {
                 state: data.state,
                 pinCode: data.pinCode,
                 occupation: data.occupation,
-                ...(data.aadhaarNumber ? { aadhaarNumber: data.aadhaarNumber } : {}),
-                ...(data.monthlyIncome !== undefined ? { monthlyIncome: data.monthlyIncome } : {}),
+                ...(data.aadhaarNumber && !data.aadhaarNumber.startsWith('TEMP-') ? { aadhaarNumber: data.aadhaarNumber } : {}),
+                ...(data.monthlyIncome !== undefined ? { monthlyIncome: Number(data.monthlyIncome) } : {}),
             });
             return this.customerRepo.findById(updated.id, { area: true });
         }
@@ -68,6 +70,15 @@ class BorrowerService {
             status: 'PENDING',
         });
         return this.customerRepo.findById(customer.id, { area: true });
+    }
+    async getLoanDetail(userId, loanId) {
+        const customer = await this.customerRepo.findByUserId(userId);
+        if (!customer)
+            throw new errors_1.NotFoundError('Customer profile not found');
+        const loan = await this.loanRepo.getLoanHistory(loanId);
+        if (!loan || loan.customerId !== customer.id)
+            throw new errors_1.NotFoundError('Loan not found');
+        return loan;
     }
 }
 exports.BorrowerService = BorrowerService;

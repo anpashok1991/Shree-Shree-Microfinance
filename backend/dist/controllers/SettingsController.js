@@ -31,6 +31,15 @@ class SettingsController {
                 next(error);
             }
         };
+        this.resetAllData = async (_req, res, next) => {
+            try {
+                const result = await this.settingsService.resetAllData();
+                res.json({ success: true, message: result.message });
+            }
+            catch (error) {
+                next(error);
+            }
+        };
         this.settingsService = new SettingsService_1.SettingsService();
     }
 }

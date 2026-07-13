@@ -20,5 +20,8 @@ export declare class SettingsService {
     }>;
     getDefaultSettings(): Promise<Record<string, string>>;
     initializeDefaults(): Promise<void>;
+    resetAllData(): Promise<{
+        message: string;
+    }>;
 }
 //# sourceMappingURL=SettingsService.d.ts.map

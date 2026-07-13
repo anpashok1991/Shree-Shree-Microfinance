@@ -6,7 +6,7 @@ const auth_1 = require("../middleware/auth");
 const router = (0, express_1.Router)();
 const controller = new ReceiptController_1.ReceiptController();
 router.use(auth_1.authenticate);
-router.get('/collection/:collectionId', (0, auth_1.authorize)('SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STAFF'), controller.getByCollection);
-router.get('/loan/:loanId', (0, auth_1.authorize)('SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STAFF'), controller.getByLoan);
+router.get('/collection/:collectionId', (0, auth_1.authorize)('SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STAFF', 'BORROWER'), controller.getByCollection);
+router.get('/loan/:loanId', (0, auth_1.authorize)('SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STAFF', 'BORROWER'), controller.getByLoan);
 exports.default = router;
 //# sourceMappingURL=receipts.js.map

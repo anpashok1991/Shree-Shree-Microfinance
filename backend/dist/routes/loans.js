@@ -19,5 +19,7 @@ router.put('/:id/reject', (0, auth_1.authorize)('SUPER_ADMIN', 'ADMIN', 'MANAGER
 router.put('/:id/return', (0, auth_1.authorize)('SUPER_ADMIN', 'ADMIN', 'MANAGER'), (0, validate_1.validate)(validators_1.returnLoanSchema), controller.returnLoan);
 router.put('/:id', (0, auth_1.authorize)('SUPER_ADMIN', 'ADMIN', 'MANAGER'), (0, validate_1.validate)(validators_1.updateLoanSchema), controller.updateLoan);
 router.post('/:id/renew', (0, auth_1.authorize)('SUPER_ADMIN', 'ADMIN'), controller.renewLoan);
+router.post('/:id/foreclose', (0, auth_1.authorize)('SUPER_ADMIN', 'ADMIN'), controller.forecloseLoan);
+router.get('/:id/noc', (0, auth_1.authorize)('SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STAFF', 'BORROWER'), controller.generateNoc);
 exports.default = router;
 //# sourceMappingURL=loans.js.map

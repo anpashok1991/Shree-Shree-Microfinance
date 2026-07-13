@@ -22,10 +22,10 @@ export declare class CollectionService {
         updatedAt: Date;
         customerId: string;
         amount: number;
+        collectedById: string;
         loanId: string;
         remarks: string | null;
         collectionNo: string;
-        collectedById: string;
         collectionDate: Date;
     } | null>;
     getCollections(page?: number, limit?: number, loanId?: string, staffId?: string, startDate?: Date, endDate?: Date): Promise<{
@@ -39,10 +39,10 @@ export declare class CollectionService {
             updatedAt: Date;
             customerId: string;
             amount: number;
+            collectedById: string;
             loanId: string;
             remarks: string | null;
             collectionNo: string;
-            collectedById: string;
             collectionDate: Date;
         }[];
         pagination: {
@@ -67,10 +67,10 @@ export declare class CollectionService {
         updatedAt: Date;
         customerId: string;
         amount: number;
+        collectedById: string;
         loanId: string;
         remarks: string | null;
         collectionNo: string;
-        collectedById: string;
         collectionDate: Date;
     }[]>;
     getAreaCollectionReport(areaId: string, startDate: Date, endDate: Date): Promise<{
@@ -83,10 +83,10 @@ export declare class CollectionService {
         updatedAt: Date;
         customerId: string;
         amount: number;
+        collectedById: string;
         loanId: string;
         remarks: string | null;
         collectionNo: string;
-        collectedById: string;
         collectionDate: Date;
     }[]>;
 }

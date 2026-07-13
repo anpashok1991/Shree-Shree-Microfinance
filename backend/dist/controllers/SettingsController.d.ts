@@ -6,5 +6,6 @@ export declare class SettingsController {
     getSettings: (_req: AuthRequest, res: Response, next: NextFunction) => Promise<void>;
     getSetting: (req: AuthRequest, res: Response, next: NextFunction) => Promise<void>;
     updateSetting: (req: AuthRequest, res: Response, next: NextFunction) => Promise<void>;
+    resetAllData: (_req: AuthRequest, res: Response, next: NextFunction) => Promise<void>;
 }
 //# sourceMappingURL=SettingsController.d.ts.map

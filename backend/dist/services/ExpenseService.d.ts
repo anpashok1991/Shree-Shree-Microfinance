@@ -15,8 +15,8 @@ export declare class ExpenseService {
         deletedById: string | null;
         createdAt: Date;
         updatedAt: Date;
-        date: Date;
         amount: number;
+        date: Date;
         remarks: string | null;
         description: string;
         category: string;
@@ -30,8 +30,8 @@ export declare class ExpenseService {
             deletedById: string | null;
             createdAt: Date;
             updatedAt: Date;
-            date: Date;
             amount: number;
+            date: Date;
             remarks: string | null;
             description: string;
             category: string;
