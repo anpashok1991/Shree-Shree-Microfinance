@@ -28,6 +28,7 @@ export default function EditProfilePage() {
     borrowerApi.getProfile()
       .then((r) => {
         if (r.data) {
+          const aadhaar = r.data.aadhaarNumber || '';
           setForm({
             name: r.data.name || '',
             fatherName: r.data.fatherName || '',
@@ -38,7 +39,7 @@ export default function EditProfilePage() {
             state: r.data.state || '',
             pinCode: r.data.pinCode || '',
             occupation: r.data.occupation || '',
-            aadhaarNumber: r.data.aadhaarNumber || '',
+            aadhaarNumber: aadhaar.startsWith('TEMP-') ? '' : aadhaar,
             monthlyIncome: r.data.monthlyIncome || 0,
           });
           setProfileId(r.data.id);
@@ -60,7 +61,11 @@ export default function EditProfilePage() {
     setSuccess('');
     setSaving(true);
     try {
-      const res = await borrowerApi.updateProfile(form);
+      const payload = {
+        ...form,
+        monthlyIncome: form.monthlyIncome ? Number(form.monthlyIncome) : undefined,
+      };
+      const res = await borrowerApi.updateProfile(payload);
       setProfileId(res.data.id);
       setSuccess('Profile saved successfully!');
 
@@ -103,7 +108,7 @@ export default function EditProfilePage() {
             </div>
             <div className="form-group">
               <label className="form-label">Aadhaar Number *</label>
-              <input className="form-input" name="aadhaarNumber" value={form.aadhaarNumber} onChange={handleChange} disabled={!!profileId} required={!profileId} />
+              <input className="form-input" name="aadhaarNumber" value={form.aadhaarNumber} onChange={handleChange} required={!profileId} />
             </div>
           </div>
         </div>

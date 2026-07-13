@@ -1,8 +1,8 @@
 import type { FormEvent } from 'react';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate, Navigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { publicApi, resolveUrl, getWhatsappNumber } from '../../services/api';
+import { getWhatsappNumber, API_BASE } from '../../services/api';
 import { Building2, Eye, EyeOff, MessageCircle } from 'lucide-react';
 
 export default function LoginPage() {
@@ -13,12 +13,7 @@ export default function LoginPage() {
   const [showPw, setShowPw] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [logo, setLogo] = useState('');
-
-  useEffect(() => {
-    publicApi.getCompanyInfo().then(r => setLogo(r.data?.logo || '')).catch(() => {});
-  }, []);
-
+  const [logoOk, setLogoOk] = useState(true);
   if (isAuthenticated) {
     if (user?.role === 'BORROWER') return <Navigate to="/borrower" replace />;
     return <Navigate to="/dashboard" replace />;
@@ -43,7 +38,10 @@ export default function LoginPage() {
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg-primary)' }}>
       <header style={{ background: 'var(--bg-card)', borderBottom: '1px solid var(--border)', padding: '12px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none', color: 'inherit' }}>
-          {logo ? <img src={resolveUrl(logo)} alt="" style={{ height: '32px' }} /> : <Building2 size={24} />}
+          {logoOk ? (
+            <img src={`${API_BASE}/public/logo`} alt="" style={{ height: '32px' }}
+              onError={() => setLogoOk(false)} />
+          ) : <Building2 size={24} />}
           <span style={{ fontWeight: 600, fontSize: '16px' }}>Shree Shree</span>
         </Link>
         <Link to="/" className="btn btn-sm btn-secondary">← Home</Link>
@@ -52,7 +50,10 @@ export default function LoginPage() {
         <div className="card" style={{ width: '100%', maxWidth: '400px' }}>
           <div className="card-body" style={{ padding: '32px' }}>
             <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-              {logo ? <img src={resolveUrl(logo)} alt="" style={{ height: '48px', marginBottom: '8px' }} /> : <Building2 size={40} style={{ color: 'var(--primary)' }} />}
+              {logoOk ? (
+                <img src={`${API_BASE}/public/logo`} alt="" style={{ height: '48px', marginBottom: '8px' }}
+                  onError={() => setLogoOk(false)} />
+              ) : <Building2 size={40} style={{ color: 'var(--primary)' }} />}
               <h2 style={{ margin: '8px 0 0' }}>Welcome Back</h2>
               <p style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>Sign in to your account</p>
             </div>

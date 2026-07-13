@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { authApi, publicApi, resolveUrl } from '../../services/api';
+import { authApi, API_BASE } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { Building2, Eye, EyeOff } from 'lucide-react';
 
@@ -11,11 +11,7 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState('');
   const [showPwd, setShowPwd] = useState(false);
-  const [logo, setLogo] = useState('');
-
-  useEffect(() => {
-    publicApi.getCompanyInfo().then(r => setLogo(r.data?.logo || '')).catch(() => {});
-  }, []);
+  const [logoOk, setLogoOk] = useState(true);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,7 +34,10 @@ export default function RegisterPage() {
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg-primary)' }}>
       <header style={{ background: 'var(--bg-card)', borderBottom: '1px solid var(--border)', padding: '12px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none', color: 'inherit' }}>
-          {logo ? <img src={resolveUrl(logo)} alt="" style={{ height: '32px' }} /> : <Building2 size={24} />}
+          {logoOk ? (
+            <img src={`${API_BASE}/public/logo`} alt="" style={{ height: '32px' }}
+              onError={() => setLogoOk(false)} />
+          ) : <Building2 size={24} />}
           <span style={{ fontWeight: 600, fontSize: '16px' }}>Shree Shree</span>
         </Link>
         <Link to="/login" className="btn btn-sm btn-secondary">Sign In</Link>
@@ -47,7 +46,10 @@ export default function RegisterPage() {
         <div className="card" style={{ width: '100%', maxWidth: '420px' }}>
           <div className="card-body" style={{ padding: '32px' }}>
             <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-              {logo ? <img src={resolveUrl(logo)} alt="" style={{ height: '48px', marginBottom: '8px' }} /> : <Building2 size={40} style={{ color: 'var(--primary)' }} />}
+              {logoOk ? (
+                <img src={`${API_BASE}/public/logo`} alt="" style={{ height: '48px', marginBottom: '8px' }}
+                  onError={() => setLogoOk(false)} />
+              ) : <Building2 size={40} style={{ color: 'var(--primary)' }} />}
               <h2 style={{ marginTop: '8px' }}>Create Account</h2>
               <p style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>Join Shree Shree Microfinance</p>
             </div>

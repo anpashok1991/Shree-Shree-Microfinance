@@ -53,8 +53,8 @@ export class BorrowerService {
         state: data.state,
         pinCode: data.pinCode,
         occupation: data.occupation,
-        ...(data.aadhaarNumber ? { aadhaarNumber: data.aadhaarNumber } : {}),
-        ...(data.monthlyIncome !== undefined ? { monthlyIncome: data.monthlyIncome } : {}),
+        ...(data.aadhaarNumber && !data.aadhaarNumber.startsWith('TEMP-') ? { aadhaarNumber: data.aadhaarNumber } : {}),
+        ...(data.monthlyIncome !== undefined ? { monthlyIncome: Number(data.monthlyIncome) } : {}),
       });
       return this.customerRepo.findById(updated.id, { area: true });
     }
