@@ -1,0 +1,23 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const LoanController_1 = require("../controllers/LoanController");
+const auth_1 = require("../middleware/auth");
+const validate_1 = require("../middleware/validate");
+const validators_1 = require("../validators");
+const router = (0, express_1.Router)();
+const controller = new LoanController_1.LoanController();
+router.use(auth_1.authenticate);
+router.get('/', (0, auth_1.authorize)('SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STAFF', 'BORROWER'), controller.getLoans);
+router.get('/pending', (0, auth_1.authorize)('SUPER_ADMIN', 'ADMIN', 'MANAGER'), controller.getPendingApprovals);
+router.get('/calculate', (0, auth_1.authorize)('SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STAFF', 'BORROWER'), controller.calculateLoan);
+router.get('/:id', (0, auth_1.authorize)('SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STAFF', 'BORROWER'), controller.getLoanById);
+router.post('/', (0, auth_1.authorize)('SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STAFF'), (0, validate_1.validate)(validators_1.createLoanSchema), controller.createLoan);
+router.post('/borrower-apply', (0, auth_1.authorize)('BORROWER'), controller.borrowerApply);
+router.put('/:id/approve', (0, auth_1.authorize)('SUPER_ADMIN', 'ADMIN', 'MANAGER'), controller.approveLoan);
+router.put('/:id/reject', (0, auth_1.authorize)('SUPER_ADMIN', 'ADMIN', 'MANAGER'), (0, validate_1.validate)(validators_1.rejectLoanSchema), controller.rejectLoan);
+router.put('/:id/return', (0, auth_1.authorize)('SUPER_ADMIN', 'ADMIN', 'MANAGER'), (0, validate_1.validate)(validators_1.returnLoanSchema), controller.returnLoan);
+router.put('/:id', (0, auth_1.authorize)('SUPER_ADMIN', 'ADMIN', 'MANAGER'), (0, validate_1.validate)(validators_1.updateLoanSchema), controller.updateLoan);
+router.post('/:id/renew', (0, auth_1.authorize)('SUPER_ADMIN', 'ADMIN'), controller.renewLoan);
+exports.default = router;
+//# sourceMappingURL=loans.js.map

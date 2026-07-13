@@ -1,0 +1,22 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const UserController_1 = require("../controllers/UserController");
+const auth_1 = require("../middleware/auth");
+const validate_1 = require("../middleware/validate");
+const validators_1 = require("../validators");
+const router = (0, express_1.Router)();
+const controller = new UserController_1.UserController();
+router.use(auth_1.authenticate);
+router.get('/', (0, auth_1.authorize)('SUPER_ADMIN', 'ADMIN'), controller.getUsers);
+router.get('/staff', (0, auth_1.authorize)('SUPER_ADMIN', 'ADMIN', 'MANAGER'), controller.getStaffList);
+router.get('/:id', (0, auth_1.authorize)('SUPER_ADMIN', 'ADMIN'), controller.getUserById);
+router.post('/', (0, auth_1.authorize)('SUPER_ADMIN', 'ADMIN'), (0, validate_1.validate)(validators_1.createUserSchema), controller.createUser);
+router.put('/:id', (0, auth_1.authorize)('SUPER_ADMIN', 'ADMIN'), (0, validate_1.validate)(validators_1.updateUserSchema), controller.updateUser);
+router.delete('/:id', (0, auth_1.authorize)('SUPER_ADMIN'), controller.deleteUser);
+router.put('/:id/status', (0, auth_1.authorize)('SUPER_ADMIN'), controller.toggleStatus);
+router.put('/:id/lock', (0, auth_1.authorize)('SUPER_ADMIN'), controller.lockUser);
+router.put('/:id/unlock', (0, auth_1.authorize)('SUPER_ADMIN'), controller.unlockUser);
+router.put('/:id/reset-password', (0, auth_1.authorize)('SUPER_ADMIN', 'ADMIN'), controller.resetPassword);
+exports.default = router;
+//# sourceMappingURL=users.js.map
