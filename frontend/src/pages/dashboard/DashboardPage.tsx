@@ -5,7 +5,7 @@ import Loading from '../../components/common/Loading';
 import type { DashboardStats } from '../../types';
 import {
   IndianRupee, Users, Wallet, Clock, AlertTriangle,
-  TrendingUp, HandshakeIcon, BarChart3
+  TrendingUp, BarChart3
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 

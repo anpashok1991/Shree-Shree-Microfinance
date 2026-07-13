@@ -24,7 +24,7 @@ export default function RegisterPage() {
     if (form.password.length < 6) { setErr('Password must be at least 6 characters'); return; }
     setLoading(true);
     try {
-      const res = await authApi.register({ name: form.name, email: form.email, phone: form.phone, password: form.password });
+      await authApi.register({ name: form.name, email: form.email, phone: form.phone, password: form.password });
       authLogin(form.email, form.password);
       navigate('/borrower/apply');
     } catch (err: any) {

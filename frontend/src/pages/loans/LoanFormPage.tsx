@@ -1,4 +1,5 @@
-import { useState, useEffect, FormEvent } from 'react';
+import type { FormEvent } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { loanApi, customerApi } from '../../services/api';
 import type { LoanCalculation } from '../../types';

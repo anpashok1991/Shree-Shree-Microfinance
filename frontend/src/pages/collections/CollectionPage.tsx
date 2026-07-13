@@ -1,4 +1,5 @@
-import { useState, useEffect, FormEvent } from 'react';
+import type { FormEvent } from 'react';
+import { useState, useEffect } from 'react';
 import { collectionApi, loanApi, customerApi } from '../../services/api';
 import { Search, IndianRupee } from 'lucide-react';
 import DataTable from '../../components/common/DataTable';

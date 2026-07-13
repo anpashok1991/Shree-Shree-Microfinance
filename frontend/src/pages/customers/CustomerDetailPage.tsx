@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { customerApi, resolveUrl } from '../../services/api';
 import Loading from '../../components/common/Loading';
-import { ArrowLeft, Edit, Trash2, FileText, Image } from 'lucide-react';
+import { ArrowLeft, Edit, FileText, Image } from 'lucide-react';
 
 export default function CustomerDetailPage() {
   const { id } = useParams();

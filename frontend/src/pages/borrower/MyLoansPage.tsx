@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { borrowerApi } from '../../services/api';
-import { Wallet, CheckCircle, Clock, XCircle } from 'lucide-react';
+import { Wallet } from 'lucide-react';
 
 export default function MyLoansPage() {
   const [loans, setLoans] = useState<any[]>([]);

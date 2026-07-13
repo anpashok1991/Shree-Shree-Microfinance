@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { customerApi } from '../../services/api';
 import DataTable from '../../components/common/DataTable';
 import { Plus, Search } from 'lucide-react';
-import Loading from '../../components/common/Loading';
 
 export default function CustomerListPage() {
   const [customers, setCustomers] = useState<any[]>([]);

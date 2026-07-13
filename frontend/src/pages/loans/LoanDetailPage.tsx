@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { loanApi, collectionApi } from '../../services/api';
+import { loanApi } from '../../services/api';
 import Loading from '../../components/common/Loading';
 import Modal from '../../components/common/Modal';
 import { ArrowLeft, CheckCircle, XCircle, RotateCcw, Edit, Save, X } from 'lucide-react';

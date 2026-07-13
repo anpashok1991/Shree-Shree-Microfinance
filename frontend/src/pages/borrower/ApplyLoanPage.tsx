@@ -1,12 +1,10 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { borrowerApi, uploadApi } from '../../services/api';
-import { useAuth } from '../../context/AuthContext';
 import { Calculator } from 'lucide-react';
 
 export default function ApplyLoanPage() {
   const navigate = useNavigate();
-  const { user } = useAuth();
   const [amount, setAmount] = useState('');
   const [calculation, setCalculation] = useState<any>(null);
   const [loading, setLoading] = useState(false);

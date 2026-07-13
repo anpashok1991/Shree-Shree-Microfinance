@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { reportApi } from '../../services/api';
-import DataTable from '../../components/common/DataTable';
 import Loading from '../../components/common/Loading';
 
 const reportTypes = [

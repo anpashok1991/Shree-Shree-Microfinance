@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { borrowerApi } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
-import { Wallet, CheckCircle, Clock, XCircle, PlusCircle } from 'lucide-react';
+import { Wallet, CheckCircle, Clock, PlusCircle } from 'lucide-react';
 
 export default function BorrowerDashboard() {
   const { user } = useAuth();

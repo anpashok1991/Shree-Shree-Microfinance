@@ -1,6 +1,6 @@
 import { Outlet, NavLink, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { Home, Wallet, FileText, LogOut, User, PlusCircle, Edit } from 'lucide-react';
+import { Home, Wallet, LogOut, User, PlusCircle, Edit } from 'lucide-react';
 
 export default function BorrowerLayout() {
   const { user, logout, isAuthenticated } = useAuth();

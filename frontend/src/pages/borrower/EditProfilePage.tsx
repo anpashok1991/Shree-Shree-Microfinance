@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { borrowerApi, uploadApi } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
-import { User } from 'lucide-react';
 
 export default function EditProfilePage() {
   const { user } = useAuth();

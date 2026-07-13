@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { enquiryApi } from '../../services/api';
-import { Mail, CheckCircle, MessageSquare } from 'lucide-react';
+import { CheckCircle, MessageSquare } from 'lucide-react';
 
 export default function EnquiryListPage() {
   const [enquiries, setEnquiries] = useState<any[]>([]);

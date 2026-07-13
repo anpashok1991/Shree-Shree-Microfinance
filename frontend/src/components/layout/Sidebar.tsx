@@ -1,8 +1,8 @@
-import { NavLink, useLocation, Link } from 'react-router-dom';
+import { NavLink, Link } from 'react-router-dom';
 import {
-  LayoutDashboard, Users, HandshakeIcon, Wallet, Banknote,
-  MapPin, Settings, FileText, BarChart3, UserCircle, LogOut,
-  Menu, X, Building2, Mail, Globe, User
+  LayoutDashboard, Users, Wallet, Banknote,
+  MapPin, Settings, BarChart3, UserCircle, LogOut,
+  Mail, Globe, User
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -31,8 +31,6 @@ const navItems = [
 export default function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { user, logout } = useAuth();
   const { dark, toggle } = useTheme();
-  const location = useLocation();
-
   return (
     <>
       {open && <div className="sidebar-overlay" onClick={onClose} style={{

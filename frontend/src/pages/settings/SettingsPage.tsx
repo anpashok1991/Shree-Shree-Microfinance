@@ -1,4 +1,4 @@
-import { useState, useEffect, FormEvent } from 'react';
+import { useState, useEffect } from 'react';
 import { settingsApi, uploadApi, resolveUrl } from '../../services/api';
 
 const settingFields = [
