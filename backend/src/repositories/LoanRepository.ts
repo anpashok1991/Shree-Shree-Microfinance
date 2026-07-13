@@ -1,5 +1,5 @@
 import { BaseRepository } from './BaseRepository';
-import { Loan } from '@prisma/client';
+import { Loan, Prisma } from '@prisma/client';
 
 export class LoanRepository extends BaseRepository<Loan> {
   constructor() {
@@ -56,7 +56,7 @@ export class LoanRepository extends BaseRepository<Loan> {
     });
   }
 
-  async getLoanHistory(loanId: string): Promise<Loan | null> {
+  async getLoanHistory(loanId: string) {
     return this.delegate.findUnique({
       where: { id: loanId },
       include: {
@@ -72,7 +72,7 @@ export class LoanRepository extends BaseRepository<Loan> {
         renewedLoans: { where: { isDeleted: false } },
         parentLoan: true,
       },
-    });
+    }) as Promise<Prisma.LoanGetPayload<{ include: { customer: true; collections: { include: { collectedBy: { select: { id: true; name: true } }; receipt: true } }; renewedLoans: true; parentLoan: true } }> | null>;
   }
 
   async getStats(): Promise<{
