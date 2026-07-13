@@ -25,8 +25,9 @@ export default function ApplyLoanPage() {
   useEffect(() => {
     borrowerApi.getProfile()
       .then((r) => {
-        if (!r) { setMissingFields(requiredFields); return; }
-        const missing = requiredFields.filter((f) => !r[f]);
+        const profile = r?.data || r;
+        if (!profile) { setMissingFields(requiredFields); return; }
+        const missing = requiredFields.filter((f) => !profile[f]);
         if (missing.length > 0) { setMissingFields(missing); return; }
       })
       .catch(() => setMissingFields(requiredFields))
